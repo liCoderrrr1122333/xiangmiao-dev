@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gemini current composer fixture</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; min-height: 720px; }
+      button, textarea, [role="menuitem"], [data-test-id="bard-mode-menu-button"] { min-height: 36px; }
+      #composer-surface { position: relative; width: 820px; margin: 260px auto 0; }
+      #attachment-host { min-height: 52px; }
+      #composer-row { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; border: 1px solid #ddd; border-radius: 28px; }
+      #composer-row textarea { min-height: 52px; border: 0; resize: none; }
+      #model-menu, #upload-menu { position: absolute; right: 40px; z-index: 2; width: 250px; padding: 8px; background: white; border: 1px solid #ddd; }
+      #upload-menu { left: 0; right: auto; }
+      #model-menu button, #upload-menu button { display: block; width: 100%; margin: 4px 0; text-align: left; }
+      .file-preview-chip { display: inline-flex; width: 88px; height: 44px; align-items: center; justify-content: center; border: 1px solid #aaa; }
+    </style>
+  </head>
+  <body>
+    <button id="fixture-account" aria-label="Google Account: fixture@example.invalid">账号</button>
+    <main id="composer-surface">
+      <div id="attachment-host"></div>
+      <form id="composer-row">
+        <button id="current-upload-trigger" type="button" aria-label="打开上传菜单">+</button>
+        <textarea role="textbox" aria-label="问问 Gemini"></textarea>
+        <div id="current-model-trigger" data-test-id="bard-mode-menu-button" tabindex="0">Flash⌄</div>
+      </form>
+      <div id="upload-menu" role="menu" hidden>
+        <button id="current-local-upload" type="button" role="menuitem">上传文件</button>
+      </div>
+      <div id="model-menu" role="menu" hidden>
+        <button type="button" class="mat-mdc-menu-item model-option active">
+          <strong>3.5 Flash-Lite</strong><span>极速回答</span>
+        </button>
+        <button type="button" class="mat-mdc-menu-item model-option selected">
+          <strong>3.6 Flash</strong><span>全方位帮助</span><gem-icon aria-label="已选中"></gem-icon>
+        </button>
+        <button type="button" class="mat-mdc-menu-item model-option" aria-checked="false">
+          <strong>3.1 Pro</strong><span>高阶数学与代码</span>
+        </button>
+        <button type="button" class="mat-mdc-menu-item model-option" aria-checked="false">
+          <strong>扩展思考</strong><span>擅长解决复杂问题</span>
+        </button>
+      </div>
+    </main>
+    <script>
+      const composerSurface = document.querySelector('#composer-surface');
+      const attachmentHost = document.querySelector('#attachment-host');
+      const fixtureParams = new URLSearchParams(location.search);
+      const suppressAttachmentPreview = fixtureParams.has('no-preview');
+      const acceptDropPreview = fixtureParams.has('drop-preview');
+      const uploadMenu = document.querySelector('#upload-menu');
+      const modelMenu = document.querySelector('#model-menu');
+      const modelTrigger = document.querySelector('#current-model-trigger');
+      if (fixtureParams.has('stale-upload')) {
+        const staleUpload = document.createElement('div');
+        staleUpload.dataset.testId = 'uploaded-img';
+        staleUpload.setAttribute('aria-label', '已上传图片');
+        staleUpload.className = 'file-preview-chip';
+        staleUpload.textContent = '旧附件预览';
+        attachmentHost.append(staleUpload);
+      }
+      if (fixtureParams.has('delayed-account')) {
+        const account = document.querySelector('#fixture-account');
+        account.hidden = true;
+        setTimeout(() => { account.hidden = false; }, 900);
+      }
+      if (fixtureParams.has('delayed-model')) {
+        modelTrigger.hidden = true;
+        setTimeout(() => { modelTrigger.hidden = false; }, 1200);
+      }
+
+      document.querySelector('#current-upload-trigger').addEventListener('click', () => {
+        uploadMenu.hidden = false;
+      });
+      document.querySelector('#current-local-upload').addEventListener('click', () => {
+        uploadMenu.hidden = true;
+        let input = document.querySelector('#current-file-input');
+        if (!input) {
+          input = document.createElement('input');
+          input.id = 'current-file-input';
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.multiple = true;
+          input.hidden = true;
+          composerSurface.append(input);
+          input.addEventListener('change', (event) => {
+            if (suppressAttachmentPreview) return;
+            attachmentHost.append(...[...event.currentTarget.files].map(() => {
+              const preview = document.createElement('div');
+              preview.className = 'file-preview-chip';
+              preview.dataset.testId = 'file-chip';
+              preview.setAttribute('aria-label', '已上传图片');
+              preview.textContent = '图片预览';
+              return preview;
+            }));
+          });
+        }
+        input.click();
+      });
+      composerSurface.addEventListener('dragover', (event) => event.preventDefault());
+      composerSurface.addEventListener('drop', (event) => {
+        event.preventDefault();
+        if (!acceptDropPreview) return;
+        const fileCount = Math.max(1, event.dataTransfer?.files?.length || 0);
+        attachmentHost.append(...Array.from({ length: fileCount }, () => {
+          const preview = document.createElement('div');
+          preview.className = 'file-preview-chip';
+          preview.dataset.testId = 'file-chip';
+          preview.setAttribute('aria-label', '已上传图片');
+          preview.textContent = '拖放图片预览';
+          return preview;
+        }));
+      });
+
+      modelTrigger.addEventListener('click', () => {
+        modelMenu.hidden = false;
+      });
+      modelMenu.querySelectorAll('.model-option').forEach((item) => {
+        item.addEventListener('click', () => {
+          modelMenu.querySelectorAll('.model-option').forEach((option) => {
+            option.classList.toggle('selected', option === item);
+            option.querySelector('gem-icon')?.remove();
+            if (option === item) {
+              const selected = document.createElement('gem-icon');
+              selected.setAttribute('aria-label', '已选中');
+              option.append(selected);
+            }
+          });
+          const label = item.querySelector('strong').textContent.trim();
+          modelTrigger.textContent = label.includes('Flash') ? 'Flash⌄' : `${label}⌄`;
+          modelMenu.hidden = true;
+        });
+      });
+    </script>
+  </body>
+</html>

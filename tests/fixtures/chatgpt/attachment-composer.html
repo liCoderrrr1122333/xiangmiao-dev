@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatGPT attachment composer fixture</title>
+    <style>
+      body { margin: 0; font-family: sans-serif; background: #f7f7f8; }
+      form { position: relative; width: 760px; margin: 220px auto 0; padding: 18px; background: white; border: 1px solid #d9d9df; }
+      #attachment-host { display: flex; gap: 12px; min-height: 84px; }
+      .attachment-card { position: relative; width: 72px; height: 72px; border: 1px solid #aaa; }
+      .attachment-card img { display: block; width: 64px; height: 64px; margin: 4px; }
+      .attachment-card button { position: absolute; top: 0; right: 0; }
+      textarea { box-sizing: border-box; width: calc(100% - 60px); height: 72px; }
+      #send-button { position: absolute; right: 18px; bottom: 18px; width: 42px; height: 42px; }
+      #upload-progress { width: 100%; height: 8px; }
+    </style>
+  </head>
+  <body>
+    <input id="unrelated-file-input" type="file" accept="image/*" multiple hidden />
+    <form data-testid="composer" onsubmit="return false">
+      <div id="attachment-host"></div>
+      <input id="file-input" type="file" accept="image/*" multiple />
+      <textarea id="prompt-textarea" aria-label="Message ChatGPT"></textarea>
+      <button id="send-button" data-testid="send-button" aria-label="Send message" disabled>Send</button>
+    </form>
+    <script>
+      const input = document.querySelector('#file-input');
+      const host = document.querySelector('#attachment-host');
+      const prompt = document.querySelector('#prompt-textarea');
+      const send = document.querySelector('#send-button');
+      let sent = 0;
+      const syncSend = () => { send.disabled = !prompt.value.trim() || host.children.length === 0 || Boolean(document.querySelector('#upload-progress')); };
+      input.addEventListener('change', syncSend);
+      prompt.addEventListener('input', syncSend);
+      send.addEventListener('click', () => { sent += 1; window.__fixtureSent = sent; });
+      window.fixture = {
+        addAttachment(name) {
+          const card = document.createElement('div');
+          card.className = 'attachment-card';
+          card.dataset.testid = 'attachment-preview';
+          card.setAttribute('aria-label', `Uploaded ${name}`);
+          const image = document.createElement('img');
+          image.alt = name;
+          image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lRz6AAAAAABJRU5ErkJggg==';
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.setAttribute('aria-label', `Remove attachment ${name}`);
+          remove.textContent = 'x';
+          remove.addEventListener('click', () => { card.remove(); syncSend(); });
+          card.append(image, remove);
+          host.append(card);
+          syncSend();
+        },
+        setBusy(busy) {
+          document.querySelector('#upload-progress')?.remove();
+          if (busy) {
+            const progress = document.createElement('div');
+            progress.id = 'upload-progress';
+            progress.setAttribute('role', 'progressbar');
+            document.querySelector('form').prepend(progress);
+          }
+          syncSend();
+        },
+        setPrompt(value) {
+          prompt.value = value;
+          prompt.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
+        }
+      };
+    </script>
+  </body>
+</html>

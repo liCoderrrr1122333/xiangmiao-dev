@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChatGPT nested model menu fixture</title>
+    <style>
+      body { margin: 0; min-height: 720px; font: 16px system-ui; background: #fff; }
+      form { position: fixed; left: 120px; bottom: 120px; width: 760px; height: 64px; border: 1px solid #ddd; }
+      button { min-width: 120px; min-height: 42px; }
+      #quality-trigger { position: absolute; right: 16px; top: 10px; }
+      [role="menu"] { position: fixed; padding: 12px; background: #fff; border: 1px solid #ddd; }
+      #quality-menu { left: 650px; bottom: 42px; }
+      #reasoning-track { position: relative; width: 220px; height: 42px; }
+      #reasoning-slider { width: 220px; }
+      #advanced-menu { left: 650px; bottom: 42px; }
+      #model-menu { left: 790px; bottom: 10px; }
+      #advanced-menu button, #model-menu button { display: flex; justify-content: space-between; gap: 18px; width: 220px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <form data-testid="composer">
+      <button id="quality-trigger" type="button" role="button" aria-haspopup="menu" aria-expanded="false">
+        <span id="quality-label">5.6 Sol 标准</span>
+      </button>
+    </form>
+
+    <div id="quality-menu" role="menu" hidden>
+      <div id="reasoning-track">
+        <input id="reasoning-slider" aria-label="思考强度" aria-valuetext="标准" type="range" min="0" max="3" value="1" />
+      </div>
+      <button id="advanced-trigger" type="button" role="menuitem" aria-haspopup="menu">高级</button>
+    </div>
+
+    <div id="advanced-menu" role="menu" hidden>
+      <button id="model-trigger" type="button" role="menuitem" aria-haspopup="menu">
+        <span>模型</span><span id="current-model">GPT-5.6 Sol</span>
+      </button>
+      <button type="button" role="menuitem" aria-haspopup="menu"><span>思考强度</span><span>高</span></button>
+    </div>
+
+    <div id="model-menu" role="menu" hidden>
+      <button type="button" role="menuitemradio" aria-checked="true" data-model="GPT-5.6 Sol">GPT-5.6 Sol</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-model="GPT-5.5">GPT-5.5</button>
+      <button type="button" role="menuitemradio" aria-checked="false" data-model="o3">o3</button>
+    </div>
+
+    <script>
+      const qualityTrigger = document.querySelector('#quality-trigger');
+      const qualityMenu = document.querySelector('#quality-menu');
+      const advancedTrigger = document.querySelector('#advanced-trigger');
+      const advancedMenu = document.querySelector('#advanced-menu');
+      const modelTrigger = document.querySelector('#model-trigger');
+      const modelMenu = document.querySelector('#model-menu');
+      const currentModel = document.querySelector('#current-model');
+      const qualityLabel = document.querySelector('#quality-label');
+      const reasoningTrack = document.querySelector('#reasoning-track');
+      const reasoningSlider = document.querySelector('#reasoning-slider');
+      const reasoningLabels = ['低', '标准', '高', '极高'];
+      let fineGrainedReasoning = false;
+      let homeIgnoringReasoning = false;
+      let layeredMenuExit = false;
+      let ignoredQualityClicks = 0;
+      const composerModelLabel = () => {
+        const selected = currentModel.textContent;
+        if (selected === 'GPT-5.5') return '5.5';
+        if (selected === 'o3') return 'o3';
+        return selected.replace(/^GPT-/, '');
+      };
+      const updateReasoningLabel = () => {
+        const value = Number(reasoningSlider.value);
+        const label = homeIgnoringReasoning
+          ? ['低', '标准', '高', '极高', '极高'][value] || '极高'
+          : fineGrainedReasoning
+          ? value < 25 ? '低' : value < 50 ? '标准' : value < 75 ? '高' : '极高'
+          : reasoningLabels[value] || '标准';
+        reasoningSlider.setAttribute('aria-valuetext', label);
+        qualityLabel.textContent = `${composerModelLabel()} ${label}`;
+        if (homeIgnoringReasoning) {
+          const fraction = value / 4;
+          reasoningSlider.style.left = `${fraction * (reasoningTrack.clientWidth - 36)}px`;
+        }
+      };
+      window.configureFineGrainedReasoning = () => {
+        fineGrainedReasoning = true;
+        homeIgnoringReasoning = false;
+        reasoningSlider.min = '0';
+        reasoningSlider.max = '100';
+        reasoningSlider.step = '1';
+        reasoningSlider.value = '0';
+        reasoningSlider.style.position = '';
+        reasoningSlider.style.width = '220px';
+        reasoningSlider.style.left = '';
+        updateReasoningLabel();
+      };
+      window.configureHomeIgnoringReasoning = () => {
+        fineGrainedReasoning = false;
+        homeIgnoringReasoning = true;
+        reasoningSlider.min = '0';
+        reasoningSlider.max = '4';
+        reasoningSlider.step = '1';
+        reasoningSlider.value = '3';
+        reasoningSlider.style.position = 'absolute';
+        reasoningSlider.style.width = '36px';
+        reasoningSlider.style.top = '3px';
+        updateReasoningLabel();
+      };
+      window.configureLayeredMenuExitReasoning = () => {
+        window.configureHomeIgnoringReasoning();
+        layeredMenuExit = true;
+        qualityMenu.hidden = false;
+        advancedMenu.hidden = false;
+        modelMenu.hidden = false;
+        qualityTrigger.setAttribute('aria-expanded', 'true');
+      };
+      window.ignoreNextQualityClick = () => { ignoredQualityClicks = 1; };
+      window.configureStandardReasoning = () => {
+        fineGrainedReasoning = false;
+        homeIgnoringReasoning = false;
+        reasoningSlider.min = '0';
+        reasoningSlider.max = '3';
+        reasoningSlider.step = '1';
+        reasoningSlider.value = '2';
+        reasoningSlider.style.position = '';
+        reasoningSlider.style.width = '220px';
+        reasoningSlider.style.top = '';
+        reasoningSlider.style.left = '';
+        updateReasoningLabel();
+      };
+      const closeMenus = () => {
+        if (layeredMenuExit) {
+          if (!modelMenu.hidden) {
+            modelMenu.hidden = true;
+            return;
+          }
+          if (!advancedMenu.hidden) {
+            advancedMenu.hidden = true;
+            return;
+          }
+          layeredMenuExit = false;
+        }
+        qualityMenu.hidden = true;
+        advancedMenu.hidden = true;
+        modelMenu.hidden = true;
+        qualityTrigger.setAttribute('aria-expanded', 'false');
+      };
+      qualityTrigger.addEventListener('click', () => {
+        if (ignoredQualityClicks > 0) {
+          ignoredQualityClicks -= 1;
+          return;
+        }
+        const wasOpen = !qualityMenu.hidden;
+        closeMenus();
+        if (wasOpen) return;
+        qualityMenu.hidden = false;
+        qualityTrigger.setAttribute('aria-expanded', 'true');
+      });
+      const showAdvanced = () => { advancedMenu.hidden = false; };
+      advancedTrigger.addEventListener('pointerover', showAdvanced);
+      advancedTrigger.addEventListener('click', showAdvanced);
+      const showModels = () => { modelMenu.hidden = false; };
+      modelTrigger.addEventListener('pointerover', showModels);
+      modelTrigger.addEventListener('click', showModels);
+      modelMenu.querySelectorAll('[data-model]').forEach((option) => {
+        option.addEventListener('click', () => {
+          const selected = option.getAttribute('data-model');
+          modelMenu.querySelectorAll('[data-model]').forEach((candidate) => {
+            candidate.setAttribute('aria-checked', String(candidate === option));
+          });
+          currentModel.textContent = selected;
+          updateReasoningLabel();
+          closeMenus();
+        });
+      });
+      reasoningSlider.addEventListener('input', updateReasoningLabel);
+      reasoningSlider.addEventListener('change', updateReasoningLabel);
+      reasoningSlider.addEventListener('mousedown', (event) => {
+        if (!homeIgnoringReasoning) return;
+        event.preventDefault();
+      });
+      reasoningSlider.addEventListener('keydown', (event) => {
+        if (homeIgnoringReasoning && event.key === 'Home') event.preventDefault();
+      });
+      reasoningTrack.addEventListener('mousedown', (event) => {
+        if (!homeIgnoringReasoning || event.target === reasoningSlider) return;
+        const box = reasoningTrack.getBoundingClientRect();
+        reasoningSlider.value = String(Math.round(((event.clientX - box.left) / box.width) * 4));
+        updateReasoningLabel();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeMenus();
+      });
+    </script>
+  </body>
+</html>

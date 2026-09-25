@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gemini ready fixture</title>
+    <style>
+      body { font-family: sans-serif; padding: 24px; }
+      button, textarea, [role="menuitem"] { display: block; width: 320px; min-height: 36px; margin: 8px 0; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <button aria-label="Google Account: fixture@example.invalid">账号</button>
+    <button id="model-trigger" data-test-id="bard-mode-menu-button" aria-label="打开模式选择器，当前模式为 Flash-Lite">Flash-Lite</button>
+    <div id="model-menu" hidden>
+      <button role="menuitem" data-test-id="model-flash-lite" aria-selected="true" data-model="3.5 Flash-Lite">3.5 Flash-Lite</button>
+      <button role="menuitem" data-test-id="model-pro" aria-selected="false" data-model="3.1 Pro">3.1 Pro</button>
+      <button role="menuitem" data-test-id="model-disabled" aria-disabled="true" data-model="Experimental">Experimental</button>
+    </div>
+    <button aria-label="上传和工具" id="upload-tools">上传和工具</button>
+    <div id="upload-menu" hidden>
+      <button role="menuitemcheckbox" aria-checked="false" id="image-mode">制作图片</button>
+      <button role="menuitem" data-test-id="local-images-files-uploader-button" id="local-upload">上传文件</button>
+    </div>
+    <form id="composer-form">
+      <input type="file" accept="image/*" multiple hidden />
+      <div id="attachments"></div>
+      <textarea role="textbox" aria-label="为 Gemini 输入提示"></textarea>
+    </form>
+    <div data-test-id="send-button-container">
+      <button aria-label="发送" id="send">发送</button>
+    </div>
+    <script>
+      const trigger = document.querySelector('#model-trigger');
+      const menu = document.querySelector('#model-menu');
+      const uploadMenu = document.querySelector('#upload-menu');
+      trigger.addEventListener('click', () => { menu.hidden = false; });
+      menu.querySelectorAll('[data-model]').forEach((item) => {
+        item.addEventListener('click', () => {
+          if (item.getAttribute('aria-disabled') === 'true') return;
+          menu.querySelectorAll('[data-model]').forEach((option) => option.setAttribute('aria-selected', String(option === item)));
+          trigger.textContent = item.dataset.model;
+          trigger.setAttribute('aria-label', `打开模式选择器，当前模式为 ${item.dataset.model}`);
+          menu.hidden = true;
+        });
+      });
+      document.querySelector('#upload-tools').addEventListener('click', () => { uploadMenu.hidden = false; });
+      document.querySelector('#image-mode').addEventListener('click', (event) => {
+        event.currentTarget.setAttribute('aria-checked', 'true');
+        uploadMenu.hidden = true;
+      });
+      document.querySelector('#local-upload').addEventListener('click', () => { uploadMenu.hidden = true; });
+      document.querySelector('input[type="file"]').addEventListener('change', (event) => {
+        const attachments = document.querySelector('#attachments');
+        attachments.replaceChildren(...[...event.currentTarget.files].map((file) => {
+          const item = document.createElement('span');
+          item.className = 'attachment-preview';
+          item.dataset.testId = 'attachment-preview';
+          item.textContent = file.name;
+          return item;
+        }));
+      });
+      document.querySelector('#send').addEventListener('click', () => {
+        const composer = document.querySelector('textarea');
+        const user = document.createElement('user-query');
+        user.textContent = composer.value;
+        document.body.append(user);
+        composer.value = '';
+        composer.dispatchEvent(new Event('input', { bubbles: true }));
+        const response = document.createElement('model-response');
+        response.textContent = '已接收本轮 fixture 消息。';
+        document.body.append(response);
+      });
+    </script>
+  </body>
+</html>

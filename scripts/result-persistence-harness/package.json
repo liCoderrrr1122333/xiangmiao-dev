@@ -1,0 +1,6 @@
+{
+  "name": "yaochuang-result-persistence-harness",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs"
+}

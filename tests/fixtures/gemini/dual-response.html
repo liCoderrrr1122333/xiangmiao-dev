@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gemini dual response fixture</title>
+  </head>
+  <body>
+    <user-query>耀创工坊分析请求</user-query>
+    <div class="response-container dual-response-panel">
+      <response-selection-panel>
+        <div>选项 A</div>
+        <message-content>{"sceneDescription":"选项 A 场景","poseDescription":"选项 A 姿态","faceDirectionDescription":"选项 A 面部","lightingMakeupDescription":"选项 A 光影"}</message-content>
+        <button type="button">此回答更实用</button>
+      </response-selection-panel>
+      <response-selection-panel>
+        <div>选项 B</div>
+        <message-content>{"sceneDescription":"选项 B 场景","poseDescription":"选项 B 姿态","faceDirectionDescription":"选项 B 面部","lightingMakeupDescription":"选项 B 光影"}</message-content>
+        <button type="button">此回答更实用</button>
+      </response-selection-panel>
+    </div>
+    <textarea aria-label="向 Gemini 提问"></textarea>
+  </body>
+</html>

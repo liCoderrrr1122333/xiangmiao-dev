@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gemini current response fixture</title>
+  </head>
+  <body>
+    <user-query>
+      <p>{"sceneDescription":"用户提示里的空模板","poseDescription":"姿态描述","faceDirectionDescription":"面部朝向描述","lightingMakeupDescription":"光影妆容描述"}</p>
+    </user-query>
+    <model-response>
+      <response-container>
+        <div class="response-container-header"></div>
+        <div class="presented-response-container">
+          <structured-content-container class="model-response-text">
+            <message-content>
+              <div class="markdown markdown-main-panel">{"sceneDescription":"真实室内场景","poseDescription":"人物侧身站立","faceDirectionDescription":"面部朝向镜头","lightingMakeupDescription":"柔和窗光照亮面部"}</div>
+            </message-content>
+          </structured-content-container>
+        </div>
+        <div class="response-container-footer"></div>
+      </response-container>
+    </model-response>
+    <textarea aria-label="向 Gemini 提问"></textarea>
+  </body>
+</html>

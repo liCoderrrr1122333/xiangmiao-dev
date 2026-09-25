@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Gemini revoked blob image result fixture</title>
+    <style>
+      img { display: block; width: 512px; height: 512px; }
+    </style>
+  </head>
+  <body>
+    <user-query>请生成一张新图片</user-query>
+    <model-response>
+      <generated-image>
+        <img alt="AI generated fixture" />
+      </generated-image>
+    </model-response>
+    <textarea aria-label="向 Gemini 提问"></textarea>
+    <script>
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#f4f4f5';
+      context.fillRect(0, 0, 512, 512);
+      context.fillStyle = '#18181b';
+      context.fillRect(96, 96, 320, 320);
+      context.fillStyle = '#7c3aed';
+      context.beginPath();
+      context.arc(256, 256, 72, 0, Math.PI * 2);
+      context.fill();
+      canvas.toBlob((blob) => {
+        const image = document.querySelector('img');
+        const objectUrl = URL.createObjectURL(blob);
+        image.addEventListener('load', () => URL.revokeObjectURL(objectUrl), { once: true });
+        image.src = objectUrl;
+      }, 'image/png');
+    </script>
+  </body>
+</html>
