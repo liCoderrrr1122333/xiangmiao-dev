@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useSettingsStore } from '../state/settingsStore';
+import { DOUBAO_ANALYSIS_MODELS, normalizeDoubaoAnalysisModel } from '../../shared/analysisProviderPolicy';
 import type { AppSettings } from '../../shared/types';
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
@@ -168,26 +169,48 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           <section>
             <h3>原图分析模型</h3>
             <p className="soft-note">
-              推荐使用本地模型离线完成原图理解和网感姿势，也可复用已登录的 ChatGPT 或 Gemini。
+              不另选分析来源时，默认使用豆包 Seed 2.1 Pro。域名和模型已内置，不需要填写。
             </p>
             <label>
               AI 供应商
               <select value={settings.apiProvider} onChange={(e) => patch('apiProvider', e.target.value as AppSettings['apiProvider'])}>
+                <option value="doubao">豆包 Seed 2.1 Pro，默认</option>
                 <option value="chatgpt">ChatGPT 内置窗口，高质量</option>
                 <option value="ollama">本地模型，免费离线</option>
                 <option value="gemini">Gemini 专属窗口</option>
-                <option value="doubao">豆包 / 火山方舟 Ark</option>
-                <option value="openai">OpenAI 备用</option>
               </select>
             </label>
+            {settings.apiProvider === 'doubao' ? (
+              <>
+              <label>
+                豆包模型
+                <select
+                  value={normalizeDoubaoAnalysisModel(settings.doubaoAnalysisModel)}
+                  onChange={(event) => patch('doubaoAnalysisModel', normalizeDoubaoAnalysisModel(event.target.value))}
+                >
+                  {DOUBAO_ANALYSIS_MODELS.map((item) => (
+                    <option key={item.id} value={item.id}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
+              <p className="soft-note">
+                已选择豆包。自动使用本机保存的 Key，只需在上面五个模型里选择。做图仍走当前制作通道。
+              </p>
+              </>
+            ) : (
             <label>
               API Key（Ollama / ChatGPT / Gemini 不需要）
-              <input type="password" value={settings.apiKeySessionOnly} onChange={(e) => setSessionKey(e.target.value)} placeholder="仅豆包 / OpenAI 需要填写" />
+              <input type="password" value={settings.apiKeySessionOnly} onChange={(e) => setSessionKey(e.target.value)} placeholder="仅其他备用供应商需要填写" />
             </label>
+            )}
+            {settings.apiProvider !== 'doubao' && (
             <label>
               Base URL
               <input value={settings.apiBaseUrl} onChange={(e) => patch('apiBaseUrl', e.target.value)} />
             </label>
+            )}
+            {settings.apiProvider !== 'doubao' && (
+            <>
             <label>
               原图分析视觉模型 / 接入点 ID
               <input list="ollama-vision-model-options" value={settings.apiVisionModel} onChange={(e) => patch('apiVisionModel', e.target.value)} />
@@ -203,12 +226,14 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             <p className="soft-note">
               本地模型默认连接 http://127.0.0.1:11434，模型填写 auto 时会自动选择本机可用视觉模型。
             </p>
+            </>
+            )}
           </section>
 
           <section>
             <h3>API 直接生成</h3>
             <p className="soft-note">
-              这个入口仍是高级模式。豆包配置主要用于“AI 分析原图并填写描述”。如果要在软件内直接生图，仍建议使用 OpenAI 图像模型。
+              这个入口只影响 API 直接生图，不影响豆包原图分析。豆包分析使用内置域名，不在这里配置。
             </p>
             <label>
               <input type="checkbox" checked={settings.apiModeEnabled} onChange={(e) => patch('apiModeEnabled', e.target.checked)} />

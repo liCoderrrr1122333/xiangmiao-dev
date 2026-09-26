@@ -90,7 +90,7 @@ import {
   type ChatGptRuntimeSample,
   type ChatGptTaskRuntimeRecord
 } from '../shared/chatGptAutomationRuntimePolicy.js';
-import { normalizeAnalysisProvider, type AnalysisProvider } from '../shared/analysisProviderPolicy.js';
+import { normalizeAnalysisProvider, normalizeDoubaoAnalysisModel, type AnalysisProvider } from '../shared/analysisProviderPolicy.js';
 import {
   buildCurrentTurnChatGptPrompt,
   completeChatGptLaneConversation,
@@ -271,6 +271,8 @@ const autosavePath = () => path.join(appDataDir(), 'autosave.masklock.json');
 const autosaveBackupPath = () => path.join(appDataDir(), 'autosave.masklock.backup.json');
 const settingsPath = () => path.join(appDataDir(), 'settings.json');
 const relayCredentialPath = () => path.join(appDataDir(), 'relay-api-key.bin');
+const doubaoAnalysisCredentialPath = () => path.join(appDataDir(), 'doubao-analysis-key.bin');
+let doubaoAnalysisApiKey = '';
 const relayBatchCheckpointPath = () => path.join(appDataDir(), 'relay-batch-checkpoint.json');
 const tinyPngBase64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lRz6AAAAAABJRU5ErkJggg==';
@@ -935,17 +937,31 @@ async function ensureRelayCredentialLoaded() {
   relayCredentialLoadPromise ??= (async () => {
     try {
       if (!safeStorage.isEncryptionAvailable()) return;
-      const encrypted = await fs.readFile(relayCredentialPath());
-      const stored = JSON.parse(safeStorage.decryptString(encrypted));
-      const config = normalizeRelayApiConfig(stored.config);
-      if (typeof stored.apiKey !== 'string' || !stored.apiKey.trim()) return;
+      try {
+        const encrypted = await fs.readFile(relayCredentialPath());
+        const stored = JSON.parse(safeStorage.decryptString(encrypted));
+        const config = normalizeRelayApiConfig(stored.config);
+        if (typeof stored.apiKey !== 'string' || !stored.apiKey.trim()) return;
+        relaySessionConfig = config;
+        relaySessionApiKey = stored.apiKey.trim();
+        relayCredentialRemembered = Boolean(relaySessionApiKey);
+        return;
+      } catch {
+        relaySessionApiKey = '';
+        relaySessionConfig = undefined;
+        relayCredentialRemembered = false;
+      }
+      const pendingPath = path.join(appDataDir(), 'relay-api-key.pending.json');
+      const pending = JSON.parse(await fs.readFile(pendingPath, 'utf8')) as { apiKey?: unknown; config?: RelayApiConfig };
+      const apiKey = typeof pending.apiKey === 'string' ? pending.apiKey.trim() : '';
+      if (!apiKey) return;
+      const config = normalizeRelayApiConfig(pending.config || {});
+      await ensureDir(appDataDir());
+      await fs.writeFile(relayCredentialPath(), safeStorage.encryptString(JSON.stringify({ config, apiKey })));
+      await fs.unlink(pendingPath);
       relaySessionConfig = config;
-      relaySessionApiKey = stored.apiKey.trim();
-      relayCredentialRemembered = Boolean(relaySessionApiKey);
-    } catch {
-      relaySessionApiKey = '';
-      relaySessionConfig = undefined;
-      relayCredentialRemembered = false;
+      relaySessionApiKey = apiKey;
+      relayCredentialRemembered = true;
     } finally {
       relayCredentialLoaded = true;
     }
@@ -12163,10 +12179,132 @@ function registerIpc() {
     }
   );
 
+  async function loadDoubaoAnalysisApiKey() {
+    if (doubaoAnalysisApiKey) return doubaoAnalysisApiKey;
+    if (!safeStorage.isEncryptionAvailable()) return '';
+    try {
+      const encrypted = await fs.readFile(doubaoAnalysisCredentialPath());
+      const stored = JSON.parse(safeStorage.decryptString(encrypted)) as { apiKey?: unknown };
+      doubaoAnalysisApiKey = typeof stored.apiKey === 'string' ? stored.apiKey.trim() : '';
+      if (doubaoAnalysisApiKey) return doubaoAnalysisApiKey;
+    } catch {
+      doubaoAnalysisApiKey = '';
+    }
+    try {
+      const pendingPath = path.join(appDataDir(), 'doubao-analysis-key.pending.json');
+      const pending = JSON.parse(await fs.readFile(pendingPath, 'utf8')) as { apiKey?: unknown };
+      const apiKey = typeof pending.apiKey === 'string' ? pending.apiKey.trim() : '';
+      if (!apiKey) return '';
+      await fs.writeFile(doubaoAnalysisCredentialPath(), safeStorage.encryptString(JSON.stringify({ apiKey })));
+      await fs.unlink(pendingPath);
+      doubaoAnalysisApiKey = apiKey;
+    } catch {
+      doubaoAnalysisApiKey = '';
+    }
+    return doubaoAnalysisApiKey;
+  }
+
+  async function doubaoVisionText(instruction: string, imageDataUrl: string, model: string) {
+    const apiKey = await loadDoubaoAnalysisApiKey();
+    if (!apiKey) throw new Error('豆包分析密钥尚未保存在本机。');
+    const response = await fetchJsonWithTimeout(
+      'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.1,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: imageDataUrl } },
+              { type: 'text', text: instruction }
+            ]
+          }]
+        })
+      },
+      180_000,
+      '豆包分析超过 180 秒。'
+    );
+    if (!response.ok) {
+      const message = response.json.error?.message || response.text || `HTTP ${response.status}`;
+      throw new Error(String(message).slice(0, 300));
+    }
+    const content = response.json.choices?.[0]?.message?.content;
+    const text = typeof content === 'string'
+      ? content
+      : Array.isArray(content)
+        ? content.map((item) => (typeof item?.text === 'string' ? item.text : '')).join('')
+        : '';
+    if (!text.trim()) throw new Error('豆包没有返回分析内容。');
+    return text.trim();
+  }
+
+  async function analyzeMainImageWithDoubao(
+    event: IpcMainInvokeEvent,
+    payload: { imageDataUrl: string; model?: string },
+    instruction: string
+  ): Promise<MainImageAnalysisResult> {
+    const model = normalizeDoubaoAnalysisModel(payload.model);
+    emitMainImageAnalysisStatus(event, {
+      step: '正在使用豆包分析原图',
+      detail: `${model} 正在读取场景、动作、面部朝向与光影。做图仍使用当前制作通道。`,
+      level: 'info',
+      model
+    });
+    try {
+      const content = await doubaoVisionText(instruction, payload.imageDataUrl, model);
+      const structuredAnalysis = parseStructuredAnalysisObject(content);
+      const degraded = !structuredAnalysis;
+      if (degraded && !isMeaningfulUnstructuredAnalysis(content)) throw new Error('豆包没有返回可用的图像描述。');
+      const analysis = structuredAnalysis || parseAnalysisObject(content);
+      emitMainImageAnalysisStatus(event, {
+        step: degraded ? '原图分析已用兼容模式完成' : '原图分析完成',
+        detail: '豆包分析已写入原图理解。正式做图仍走 ChatGPT。',
+        level: degraded ? 'warning' : 'success',
+        model
+      });
+      return { ok: true, analysis, model, degraded, serviceReady: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '豆包原图分析失败。';
+      emitMainImageAnalysisStatus(event, { step: '豆包分析未完成', detail: message, level: 'error' });
+      return { ok: false, error: message };
+    }
+  }
+
+  async function analyzeWebPosesWithDoubao(
+    event: IpcMainInvokeEvent,
+    payload: { imageDataUrl: string; model?: string }
+  ): Promise<WebPoseAnalysisResult> {
+    const instruction = `你是人像摄影姿势策划师。只根据附件中实际可见的画幅、人物身体范围、服装、环境和拍摄角度，提出 8 个适合当前照片的自然网感姿势。不要猜测身份，不要生成图片，不要照抄原图姿势，不要新增道具，也不要要求补出画幅外肢体。第 1-3 条变化轻微，第 4-6 条变化适中，第 7-8 条变化明显但仍适合当前画幅。每条 description 写清身体朝向、肩颈、手臂和手部、重心、头部角度、视线与遮挡关系。只返回一个 JSON 对象，不要 Markdown、代码块或解释；固定键名为 poses、id、title、description，其他内容全部使用中文；poses 恰好 8 条，id 依次为 1 到 8：{"poses":[{"id":1,"title":"姿势短标题","description":"完整姿势描述"},{"id":2,"title":"姿势短标题","description":"完整姿势描述"},{"id":3,"title":"姿势短标题","description":"完整姿势描述"},{"id":4,"title":"姿势短标题","description":"完整姿势描述"},{"id":5,"title":"姿势短标题","description":"完整姿势描述"},{"id":6,"title":"姿势短标题","description":"完整姿势描述"},{"id":7,"title":"姿势短标题","description":"完整姿势描述"},{"id":8,"title":"姿势短标题","description":"完整姿势描述"}]}`;
+    const model = normalizeDoubaoAnalysisModel(payload.model);
+    emitWebPoseAnalysisStatus(event, {
+      step: '正在用豆包生成 8 个网感姿势',
+      detail: `${model} 只负责分析，不负责生图。`,
+      level: 'info'
+    });
+    try {
+      const text = await doubaoVisionText(instruction, payload.imageDataUrl, model);
+      const suggestions = parseWebPoseSuggestions(text);
+      if (!suggestions) throw new Error('豆包没有返回完整的 8 条姿势。');
+      emitWebPoseAnalysisStatus(event, { step: '网感姿势分析完成', detail: '已返回 8 个新姿势。', level: 'success' });
+      return { ok: true, suggestions };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '豆包网感姿势分析失败。';
+      emitWebPoseAnalysisStatus(event, { step: '网感姿势分析未完成', detail: message, level: 'error' });
+      return { ok: false, error: message, errorCode: 'doubao_pose_failed' };
+    }
+  }
+
   registerTrustedIpcHandler(
     'api:analyze-web-poses',
     async (event, payload?: { provider?: AnalysisProvider; imageDataUrl?: string; baseUrl?: string; model?: string }): Promise<WebPoseAnalysisResult> => {
       if (!payload?.imageDataUrl) return { ok: false, error: '请先上传原图。', errorCode: 'missing_image' };
+      if (payload.provider === 'doubao') return analyzeWebPosesWithDoubao(event, { imageDataUrl: payload.imageDataUrl, model: payload.model });
       if (payload.provider === 'ollama') return analyzeWebPosesWithOllama(event, { imageDataUrl: payload.imageDataUrl, baseUrl: payload.baseUrl, model: payload.model });
       if (payload.provider === 'gemini') return analyzeWebPosesWithGemini(event, { imageDataUrl: payload.imageDataUrl });
       return analyzeWebPosesWithChatGpt(event, { imageDataUrl: payload.imageDataUrl });
@@ -12176,7 +12314,7 @@ function registerIpc() {
   registerTrustedIpcHandler(
     'api:analyze-main-image',
     async (event, payload: { provider?: AnalysisProvider; apiKey: string; imageDataUrl: string; baseUrl?: string; model?: string }) => {
-    const provider = payload.provider || 'chatgpt';
+    const provider = payload.provider || 'doubao';
     if (!payload.imageDataUrl) return { ok: false, error: '请先上传原图。' };
     const instruction = `你是人像照片观察员。认真观察图片，只描述实际可见内容，不猜测身份、年龄、职业等信息。
 如果图片是左右拼图：左侧全图用于观察场景和身体姿态，右侧人脸特写用于观察头部角度、表情、面部光影、妆容与肤质。
@@ -12191,6 +12329,10 @@ lightingMakeupDescription：用3到5句写面部光源颜色与方向、额头�
 precisionNotes：必须原样填写下面这句话，不要在句子外添加引号：红圈内的人脸替换要融入原图，维持红圈内原先面部光影、手机拍摄普通画质和真实皮肤质感，红圈外完全不变，不要简单把头P过去。`;
 
     try {
+      if (provider === 'doubao') {
+        return analyzeMainImageWithDoubao(event, payload, instruction);
+      }
+
       if (provider === 'ollama') {
         return analyzeMainImageWithOllama(event, payload, instruction);
       }
@@ -12202,11 +12344,13 @@ precisionNotes：必须原样填写下面这句话，不要在句子外添加引
       if (provider === 'gemini') {
         return analyzeMainImageWithGemini(event, payload, instruction);
       }
-      return { ok: false, error: '当前分析来源不可用，请选择 ChatGPT、Gemini 或本地模型。' };
+      return { ok: false, error: '当前分析来源不可用，请选择豆包、ChatGPT、Gemini 或本地模型。' };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : '原图分析失败。' };
     }
   });
+
+  void loadDoubaoAnalysisApiKey();
 }
 
 app.on('child-process-gone', (_event, details) => {
@@ -12221,6 +12365,7 @@ app.on('child-process-gone', (_event, details) => {
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   registerIpc();
+  await ensureRelayCredentialLoaded();
   await createWindow();
   try {
     const rawSettings = await fs.readFile(settingsPath(), 'utf8').catch(() => '{}');

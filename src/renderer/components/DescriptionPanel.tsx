@@ -4,9 +4,13 @@ import { useProjectStore } from '../state/projectStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { createAnalysisImage } from '../utils/imageUtils';
 import {
+  DOUBAO_ANALYSIS_BASE_URL,
+  DOUBAO_ANALYSIS_MODEL,
+  DOUBAO_ANALYSIS_MODELS,
   analysisProviderLabel,
   analysisRouteSummary,
   normalizeAnalysisProvider,
+  normalizeDoubaoAnalysisModel,
   type AnalysisProvider
 } from '../../shared/analysisProviderPolicy';
 import type { GenerationProvider } from '../../shared/generationProviderPolicy';
@@ -73,6 +77,7 @@ export function DescriptionPanel({
   const faceReady = Boolean(project.faceDirectionDescription.trim());
   const lightReady = Boolean(project.lightingMakeupDescription.trim());
   const analysisProvider = normalizeAnalysisProvider(settings.apiProvider);
+  const doubaoModel = normalizeDoubaoAnalysisModel(settings.doubaoAnalysisModel);
   const activeGenerationLabel = generationProvider === 'relay'
     ? '自由 API'
     : generationProvider === 'gemini' ? 'Gemini' : 'ChatGPT';
@@ -151,8 +156,17 @@ export function DescriptionPanel({
 
   function updateAnalysisProvider(provider: AnalysisProvider) {
     if (isAnalyzing || isPoseAnalyzing || isGenerating || provider === analysisProvider) return;
-    const nextSettings = { ...settings, apiProvider: provider };
-    setSettings({ apiProvider: provider });
+    const usesDoubaoLocalFields = settings.apiBaseUrl === DOUBAO_ANALYSIS_BASE_URL || settings.apiVisionModel === DOUBAO_ANALYSIS_MODEL;
+    const nextSettings = {
+      ...settings,
+      apiProvider: provider,
+      ...(provider === 'ollama' && usesDoubaoLocalFields
+        ? { apiBaseUrl: 'http://127.0.0.1:11434', apiVisionModel: 'auto' }
+        : {})
+    };
+    setSettings(provider === 'ollama' && usesDoubaoLocalFields
+      ? { apiProvider: provider, apiBaseUrl: 'http://127.0.0.1:11434', apiVisionModel: 'auto' }
+      : { apiProvider: provider });
     void window.masklock?.writeSettings(nextSettings);
   }
 
@@ -204,8 +218,10 @@ export function DescriptionPanel({
         provider: analysisProvider,
         apiKey: settings.apiKeySessionOnly,
         imageDataUrl: analysisImageDataUrl,
-        baseUrl: settings.apiBaseUrl,
-        model: settings.apiProvider === 'gemini' ? settings.geminiModel : settings.apiVisionModel
+        baseUrl: analysisProvider === 'doubao' ? DOUBAO_ANALYSIS_BASE_URL : settings.apiBaseUrl,
+        model: analysisProvider === 'doubao'
+          ? doubaoModel
+          : settings.apiProvider === 'gemini' ? settings.geminiModel : settings.apiVisionModel
       });
       if (!result?.ok || !result.analysis) {
         const error = result?.error || '原图分析没有返回结果。';
@@ -267,8 +283,8 @@ export function DescriptionPanel({
       const result = await window.masklock?.apiAnalyzeWebPoses({
         provider: analysisProvider,
         imageDataUrl: analysisImageDataUrl,
-        baseUrl: settings.apiBaseUrl,
-        model: settings.apiVisionModel
+        baseUrl: analysisProvider === 'doubao' ? DOUBAO_ANALYSIS_BASE_URL : settings.apiBaseUrl,
+        model: analysisProvider === 'doubao' ? doubaoModel : settings.apiVisionModel
       });
       if (!result?.ok || result.suggestions?.length !== 8) {
         setPoseStatusLevel('error');
@@ -345,6 +361,7 @@ export function DescriptionPanel({
           <span>分析来源</span>
           <div role="group" aria-label="AI 分析来源">
             {([
+              ['doubao', '豆包'],
               ['chatgpt', 'ChatGPT'],
               ['ollama', '本地模型'],
               ['gemini', 'Gemini']
@@ -365,6 +382,26 @@ export function DescriptionPanel({
               );
             })}
           </div>
+          {analysisProvider === 'doubao' && (
+            <label className="doubao-analysis-model">
+              <span>豆包模型</span>
+              <select
+                aria-label="豆包分析模型"
+                value={doubaoModel}
+                disabled={isGenerating || isAnalyzing || isPoseAnalyzing}
+                onChange={(event) => {
+                  const doubaoAnalysisModel = normalizeDoubaoAnalysisModel(event.target.value);
+                  const nextSettings = { ...settings, doubaoAnalysisModel };
+                  setSettings({ doubaoAnalysisModel });
+                  void window.masklock?.writeSettings(nextSettings);
+                }}
+              >
+                {DOUBAO_ANALYSIS_MODELS.map((item) => (
+                  <option key={item.id} value={item.id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
           {generationProvider === 'relay' && (
             <button type="button" className="production-route-tool api" onClick={onOpenApiConfig}>
               <KeyRound /> <span>{relayStatus?.configured ? 'API 已配置' : '配置 API'}</span>

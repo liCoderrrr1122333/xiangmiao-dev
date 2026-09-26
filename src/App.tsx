@@ -493,7 +493,6 @@ function App() {
     const patch: Partial<AppSettings> = { generationProvider: provider };
     if (provider !== 'relay') {
       patch.webAiProvider = provider;
-      patch.apiProvider = provider;
     }
     const nextSettings = { ...settings, ...patch };
     setSettings(patch);

@@ -26,8 +26,10 @@ test('local analysis and generation providers form an explicit production route'
   assert.equal(normalizeAnalysisProvider('chatgpt'), 'chatgpt');
   assert.equal(normalizeAnalysisProvider('gemini'), 'gemini');
   assert.equal(normalizeAnalysisProvider('doubao-web'), 'chatgpt');
-  assert.equal(normalizeAnalysisProvider('doubao'), 'chatgpt');
+  assert.equal(normalizeAnalysisProvider('doubao'), 'doubao');
   assert.equal(normalizeAnalysisProvider('openai'), 'chatgpt');
+  assert.equal(analysisProviderLabel('doubao'), '豆包');
+  assert.equal(analysisRouteSummary('doubao', 'chatgpt'), '豆包分析 → ChatGPT 做图');
   assert.equal(analysisProviderLabel('ollama'), '本地模型');
   assert.equal(analysisRouteSummary('ollama', 'relay'), '本地模型分析 → 自由 API 做图');
 });
@@ -46,13 +48,14 @@ test('renderer exposes collapsible local-first routing and contains no obsolete 
   assert.match(description, /制作通道/);
   assert.match(description, /本地模型/);
   assert.match(description, /production-route-disclosure/);
-  assert.match(description, /apiAnalyzeWebPoses\(\{[\s\S]*provider: analysisProvider,[\s\S]*baseUrl: settings\.apiBaseUrl,[\s\S]*model: settings\.apiVisionModel/);
+  assert.match(description, /apiAnalyzeWebPoses\(\{[\s\S]*provider: analysisProvider,[\s\S]*DOUBAO_ANALYSIS_MODEL/);
   assert.doesNotMatch(description, /豆包网页|查看豆包/);
   assert.doesNotMatch(types, /'doubao'\s*\|\s*'openai'/);
   assert.match(generationPolicy, /自由 API/);
   assert.doesNotMatch(`${app}\n${modal}`, /连一连|中转站/);
   assert.doesNotMatch(main, /连一连 API 连接成功|中转站未配置|中转站连接失败/);
   assert.match(main, /payload\.provider === 'ollama'[\s\S]*analyzeWebPosesWithOllama/);
-  assert.doesNotMatch(main, /provider === 'doubao'/);
+  assert.match(main, /provider === 'doubao'[\s\S]*analyzeMainImageWithDoubao/);
+  assert.doesNotMatch(main, /豆包网页|查看豆包/);
   assert.doesNotMatch(main, /providerVisionModel\('openai'/);
 });

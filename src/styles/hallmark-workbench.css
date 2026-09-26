@@ -868,6 +868,29 @@ body {
   color: #ddd8ff;
 }
 
+.levitated-workbench .doubao-analysis-model {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.levitated-workbench .doubao-analysis-model span {
+  color: #a9abb2;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.levitated-workbench .doubao-analysis-model select {
+  min-height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: #1b1c20;
+  color: #ddd8ff;
+  font-size: 11px;
+}
+
 .levitated-workbench .production-route-tool {
   grid-column: 2;
   justify-self: stretch;

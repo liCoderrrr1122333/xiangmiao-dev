@@ -279,6 +279,7 @@ export interface AppSettings {
   apiKeySessionOnly: string;
   apiModel: string;
   apiVisionModel: string;
+  doubaoAnalysisModel: string;
   apiSize: string;
   apiQuality: string;
   apiCount: number;
