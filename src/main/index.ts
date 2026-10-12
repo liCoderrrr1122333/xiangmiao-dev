@@ -239,7 +239,7 @@ const chatGptNavigationTimeoutMs = 15_000;
 const chatGptStorageTimeoutMs = 5_000;
 const chatGptComposerRecoveryHardTimeoutMs = 65_000;
 const chatGptBatchTotalTimeoutMs = 12 * 60 * 60 * 1000;
-app.setName('耀创工坊');
+app.setName('像锚');
 if (process.platform === 'win32') {
   app.commandLine.appendSwitch('disable-gpu-sandbox');
 }
@@ -247,12 +247,15 @@ if (process.platform === 'win32') {
 process.stdout?.on('error', () => undefined);
 process.stderr?.on('error', () => undefined);
 if (process.platform === 'win32') {
-  app.setAppUserModelId('studio.yaochuang.workshop');
+  app.setAppUserModelId('studio.xiangmao.workshop');
 }
 const preferredAppDataDir = preferredAppDataDirectory(
   process.platform,
-  process.env.YAOCHUANG_USER_DATA_DIR,
-  app.isPackaged ? '' : path.join(app.getAppPath(), '.local-data')
+  process.env.XIANGMAO_USER_DATA_DIR || process.env.YAOCHUANG_USER_DATA_DIR,
+  app.isPackaged ? '' : path.join(app.getAppPath(), '.local-data'),
+  app.isPackaged && process.platform === 'darwin'
+    ? path.join(app.getPath('appData'), '耀创工坊')
+    : ''
 );
 if (preferredAppDataDir) {
   try {
@@ -260,15 +263,19 @@ if (preferredAppDataDir) {
     app.setPath('userData', preferredAppDataDir);
     app.setPath('sessionData', preferredAppDataDir);
   } catch (error) {
-    if (!app.isPackaged || process.env.YAOCHUANG_USER_DATA_DIR?.trim()) {
-      throw new Error('无法创建指定的数据目录。请检查目录权限或设置 YAOCHUANG_USER_DATA_DIR 为可写的绝对路径。', { cause: error });
+    if (!app.isPackaged || (process.env.XIANGMAO_USER_DATA_DIR || process.env.YAOCHUANG_USER_DATA_DIR)?.trim()) {
+      throw new Error('无法创建指定的数据目录。请检查目录权限或设置 XIANGMAO_USER_DATA_DIR 为可写的绝对路径。', { cause: error });
     }
     // Only an unavailable installed default may retain Electron's platform directory.
   }
 }
 const appDataDir = () => app.getPath('userData');
-const autosavePath = () => path.join(appDataDir(), 'autosave.masklock.json');
-const autosaveBackupPath = () => path.join(appDataDir(), 'autosave.masklock.backup.json');
+const autosavePath = () => {
+  const current = path.join(appDataDir(), 'autosave.xiangmao.json');
+  const legacy = path.join(appDataDir(), 'autosave.masklock.json');
+  return !fsSync.existsSync(current) && fsSync.existsSync(legacy) ? legacy : current;
+};
+const autosaveBackupPath = () => autosavePath().replace(/\.json$/, '.backup.json');
 const settingsPath = () => path.join(appDataDir(), 'settings.json');
 const relayCredentialPath = () => path.join(appDataDir(), 'relay-api-key.bin');
 const doubaoAnalysisCredentialPath = () => path.join(appDataDir(), 'doubao-analysis-key.bin');
@@ -341,7 +348,10 @@ let chatGptBatchStartedAt = 0;
 let lastSuccessfulOllamaVisionModel = '';
 const localAnalysisDefaultModel = 'qwen2.5vl:3b';
 const localAnalysisInstallerUrl = 'https://ollama.com/download/windows';
-const chatGptPartition = 'persist:yaochuang-chatgpt';
+// Reuse the old browser partition when it holds an existing login.
+const chatGptPartition = fsSync.existsSync(path.join(appDataDir(), 'Partitions', 'yaochuang-chatgpt'))
+  ? 'persist:yaochuang-chatgpt'
+  : 'persist:xiangmao-chatgpt';
 const chatGptKeepAliveMs = 10 * 60 * 1000;
 const chatGptLoginConfirmationCount = 3;
 const chatGptConfirmedLoginGraceMs = 5 * 60 * 1000;
@@ -533,7 +543,7 @@ async function readAutosaveProject() {
     try {
       return { project: parseProjectStateJson(raw), status: 'loaded' as const };
     } catch (error) {
-      const corruptPath = path.join(appDataDir(), `autosave.masklock.corrupt-${Date.now()}.json`);
+      const corruptPath = path.join(appDataDir(), `autosave.xiangmao.corrupt-${Date.now()}.json`);
       await fs.copyFile(primary, corruptPath).catch(() => undefined);
       const backupRaw = await fs.readFile(backup, 'utf8').catch(() => '');
       if (backupRaw) {
@@ -618,12 +628,12 @@ function extFromMime(mime: string) {
 }
 
 function safeName(name: string) {
-  return sanitizeWindowsFileName(name, '耀创工坊项目');
+  return sanitizeWindowsFileName(name, '像锚项目');
 }
 
 function safeResultProjectName(projectName: string) {
   const trimmed = projectName.trim();
-  if (!trimmed || trimmed === '未命名项目') return '耀创工坊_未命名项目';
+  if (!trimmed || trimmed === '未命名项目') return '像锚_未命名项目';
   return safeName(trimmed);
 }
 
@@ -740,12 +750,12 @@ async function exportRootDir() {
     const preferredRoot = 'D:\\';
     try {
       await fs.access(preferredRoot);
-      return path.join(preferredRoot, 'Yaochuang-Workshop', 'Exports');
+      return path.join(preferredRoot, 'Xiangmao-Workshop', 'Exports');
     } catch {
       // Fall through to the platform documents directory.
     }
   }
-  return path.join(app.getPath('documents'), '耀创工坊', 'Exports');
+  return path.join(app.getPath('documents'), '像锚', 'Exports');
 }
 
 async function writeDataUrl(filePath: string, dataUrl: string) {
@@ -951,17 +961,21 @@ async function ensureRelayCredentialLoaded() {
         relaySessionConfig = undefined;
         relayCredentialRemembered = false;
       }
-      const pendingPath = path.join(appDataDir(), 'relay-api-key.pending.json');
-      const pending = JSON.parse(await fs.readFile(pendingPath, 'utf8')) as { apiKey?: unknown; config?: RelayApiConfig };
-      const apiKey = typeof pending.apiKey === 'string' ? pending.apiKey.trim() : '';
-      if (!apiKey) return;
-      const config = normalizeRelayApiConfig(pending.config || {});
-      await ensureDir(appDataDir());
-      await fs.writeFile(relayCredentialPath(), safeStorage.encryptString(JSON.stringify({ config, apiKey })));
-      await fs.unlink(pendingPath);
-      relaySessionConfig = config;
-      relaySessionApiKey = apiKey;
-      relayCredentialRemembered = true;
+      try {
+        const pendingPath = path.join(appDataDir(), 'relay-api-key.pending.json');
+        const pending = JSON.parse(await fs.readFile(pendingPath, 'utf8')) as { apiKey?: unknown; config?: RelayApiConfig };
+        const apiKey = typeof pending.apiKey === 'string' ? pending.apiKey.trim() : '';
+        if (!apiKey) return;
+        const config = normalizeRelayApiConfig(pending.config || {});
+        await ensureDir(appDataDir());
+        await fs.writeFile(relayCredentialPath(), safeStorage.encryptString(JSON.stringify({ config, apiKey })));
+        await fs.unlink(pendingPath);
+        relaySessionConfig = config;
+        relaySessionApiKey = apiKey;
+        relayCredentialRemembered = true;
+      } catch {
+        relaySessionApiKey = relaySessionApiKey || '';
+      }
     } finally {
       relayCredentialLoaded = true;
     }
@@ -1134,7 +1148,7 @@ function describeChatGptWindowFailure(error: unknown, action: 'open' | 'check') 
   const prefix = action === 'open' ? '专属 Chrome 窗口未能打开。' : '暂时无法检查 ChatGPT 登录状态。';
   if (
     error instanceof ChromeChatGptStartupError ||
-    rawMessage.includes('YAOCHUANG_CHROME_STARTUP_FAILED') ||
+    rawMessage.includes('XIANGMAO_CHROME_STARTUP_FAILED') ||
     /ECONNREFUSED|local control port|before opening its local control port/i.test(rawMessage)
   ) {
     return `${prefix}软件已清理专属进程，并依次尝试无端口本地管道、兼容端口、Chrome 与 Edge；普通浏览器能打开不代表本地自动化通道可用。请再次点击“查看窗口”，软件会重新建立独立通道。`;
@@ -2114,7 +2128,7 @@ function getChatGptSession() {
 function getStableChatGptUserAgent(rawUserAgent: string) {
   return rawUserAgent
     .replace(/\sElectron\/[\d.]+/g, '')
-    .replace(/\s耀创工坊\/[\d.]+/g, '')
+    .replace(/\s像锚\/[\d.]+/g, '')
     .trim();
 }
 
@@ -2128,7 +2142,7 @@ async function persistChatGptPageStorage(webContents: ChatGptWebContentsLike) {
         const persistedBefore = navigator.storage?.persisted ? await navigator.storage.persisted().catch(() => false) : false;
         const persistedAfter = navigator.storage?.persist ? await navigator.storage.persist().catch(() => false) : persistedBefore;
         const estimate = navigator.storage?.estimate ? await navigator.storage.estimate().catch(() => null) : null;
-        try { localStorage.setItem('yaochuang_chatgpt_profile_keepalive', String(Date.now())); } catch {}
+        try { localStorage.setItem('xiangmao_chatgpt_profile_keepalive', String(Date.now())); } catch {}
         return { persistedBefore, persistedAfter, estimate };
       })())`,
       chatGptStorageTimeoutMs
@@ -2278,17 +2292,17 @@ function isChatGptKeepAliveEnabled() {
 
 function getTrayIconPath() {
   const portableIcons = [
-    path.join(__dirname, '../../dist/yaochuang.ico'),
-    path.join(process.cwd(), 'public/yaochuang.ico'),
+    path.join(__dirname, '../../dist/xiangmao.ico'),
+    path.join(process.cwd(), 'public/xiangmao.ico'),
     path.join(process.cwd(), 'build/icon.ico'),
-    path.join(__dirname, '../../dist/yaochuang-tray.png'),
-    path.join(process.cwd(), 'public/yaochuang-tray.png')
+    path.join(__dirname, '../../dist/xiangmao-tray.png'),
+    path.join(process.cwd(), 'public/xiangmao-tray.png')
   ];
   const iconCandidates = process.platform === 'darwin'
     ? [
-        path.join(process.resourcesPath, 'yaochuang-tray.png'),
-        path.join(__dirname, '../../dist/yaochuang-tray.png'),
-        path.join(process.cwd(), 'public/yaochuang-tray.png'),
+        path.join(process.resourcesPath, 'xiangmao-tray.png'),
+        path.join(__dirname, '../../dist/xiangmao-tray.png'),
+        path.join(process.cwd(), 'public/xiangmao-tray.png'),
         ...portableIcons
       ]
     : [path.join(process.resourcesPath, 'icon.ico'), ...portableIcons];
@@ -2317,11 +2331,11 @@ function ensureAppTray() {
     return appTray;
   }
   appTray = new Tray(getTrayIcon());
-  appTray.setToolTip('耀创工坊 - 正在后台保留 ChatGPT 登录');
+  appTray.setToolTip('像锚 - 正在后台保留 ChatGPT 登录');
   appTray.setContextMenu(
     Menu.buildFromTemplate([
       {
-        label: '打开耀创工坊',
+        label: '打开像锚',
         click: () => {
           void restoreMainWindowFromTray();
         }
@@ -2683,7 +2697,7 @@ async function showChatGptWindowForInspection(
     }
     return {
       ok: true,
-      message: backend === 'chrome' ? '耀创工坊专属 Chrome 已显示。' : 'ChatGPT 自动窗口已显示。',
+      message: backend === 'chrome' ? '像锚专属 Chrome 已显示。' : 'ChatGPT 自动窗口已显示。',
       url: win.webContents.getURL(),
       backend,
       recoveryAvailable: false,
@@ -3046,10 +3060,10 @@ function chatGptModelMenuScript(requestedModel = '') {
             confirmed: true
           };
         }
-        composerTrigger.element.setAttribute('data-yaochuang-model-trigger', 'composer-nested');
+        composerTrigger.element.setAttribute('data-xiangmao-model-trigger', 'composer-nested');
         const nested = await openNestedModelMenu(composerTrigger.element);
         if (!nested) {
-          composerTrigger.element.removeAttribute('data-yaochuang-model-trigger');
+          composerTrigger.element.removeAttribute('data-xiangmao-model-trigger');
           continue;
         }
         const currentOption = nested.options.find((option) => option.current);
@@ -3059,7 +3073,7 @@ function chatGptModelMenuScript(requestedModel = '') {
           : undefined;
         if (!requested) {
           await closeMenus();
-          composerTrigger.element.removeAttribute('data-yaochuang-model-trigger');
+          composerTrigger.element.removeAttribute('data-xiangmao-model-trigger');
           return {
             triggerFound: true,
             currentModel,
@@ -3068,7 +3082,7 @@ function chatGptModelMenuScript(requestedModel = '') {
         }
         if (!requestedOption) {
           await closeMenus();
-          composerTrigger.element.removeAttribute('data-yaochuang-model-trigger');
+          composerTrigger.element.removeAttribute('data-xiangmao-model-trigger');
           return {
             triggerFound: true,
             currentModel,
@@ -3081,7 +3095,7 @@ function chatGptModelMenuScript(requestedModel = '') {
         }
         if (requestedOption.current) {
           await closeMenus();
-          composerTrigger.element.removeAttribute('data-yaochuang-model-trigger');
+          composerTrigger.element.removeAttribute('data-xiangmao-model-trigger');
           return {
             triggerFound: true,
             currentModel: requestedOption.label,
@@ -3094,7 +3108,7 @@ function chatGptModelMenuScript(requestedModel = '') {
         }
         if (nested.familyLabel && sameModel(nested.familyLabel, requested)) {
           await closeMenus();
-          composerTrigger.element.removeAttribute('data-yaochuang-model-trigger');
+          composerTrigger.element.removeAttribute('data-xiangmao-model-trigger');
           return {
             triggerFound: true,
             currentModel: nested.familyLabel,
@@ -3110,7 +3124,7 @@ function chatGptModelMenuScript(requestedModel = '') {
         }
         activateElement(requestedOption.element);
         await waitInPage(700);
-        const markedTrigger = document.querySelector('[data-yaochuang-model-trigger="composer-nested"]');
+        const markedTrigger = document.querySelector('[data-xiangmao-model-trigger="composer-nested"]');
         const refreshedComposerTrigger = markedTrigger && visible(markedTrigger)
           ? markedTrigger as HTMLElement
           : composerTriggers()[0]?.element;
@@ -3129,7 +3143,7 @@ function chatGptModelMenuScript(requestedModel = '') {
             })()
           : undefined;
         if (!trustedClickTarget) await closeMenus();
-        refreshedComposerTrigger?.removeAttribute('data-yaochuang-model-trigger');
+        refreshedComposerTrigger?.removeAttribute('data-xiangmao-model-trigger');
         return {
           triggerFound: true,
           currentModel: verifiedCurrent,
@@ -3158,7 +3172,7 @@ function chatGptModelMenuScript(requestedModel = '') {
         confirmed: true
       };
     }
-    trigger.element.setAttribute('data-yaochuang-model-trigger', 'true');
+    trigger.element.setAttribute('data-xiangmao-model-trigger', 'true');
     activateElement(trigger.element);
     await waitInPage(420);
     const root = menuRoots().at(-1);
@@ -3168,7 +3182,7 @@ function chatGptModelMenuScript(requestedModel = '') {
       : undefined;
     if (!requested) {
       await closeMenus();
-      trigger.element.removeAttribute('data-yaochuang-model-trigger');
+      trigger.element.removeAttribute('data-xiangmao-model-trigger');
       return {
         triggerFound: true,
         currentModel,
@@ -3177,7 +3191,7 @@ function chatGptModelMenuScript(requestedModel = '') {
     }
     if (!requestedOption) {
       await closeMenus();
-      trigger.element.removeAttribute('data-yaochuang-model-trigger');
+      trigger.element.removeAttribute('data-xiangmao-model-trigger');
       return {
         triggerFound: true,
         currentModel,
@@ -3190,7 +3204,7 @@ function chatGptModelMenuScript(requestedModel = '') {
     }
     activateElement(requestedOption.element);
     await waitInPage(700);
-    const markedTrigger = document.querySelector('[data-yaochuang-model-trigger="true"]');
+    const markedTrigger = document.querySelector('[data-xiangmao-model-trigger="true"]');
     const refreshedTrigger = markedTrigger && visible(markedTrigger)
       ? markedTrigger
       : [...document.querySelectorAll('button, [role="button"]')]
@@ -3204,7 +3218,7 @@ function chatGptModelMenuScript(requestedModel = '') {
       normalized(selectedLabel).includes(normalized(requestedOption.label)) ||
       normalized(requestedOption.label).includes(normalized(selectedLabel))
     );
-    refreshedTrigger?.removeAttribute('data-yaochuang-model-trigger');
+    refreshedTrigger?.removeAttribute('data-xiangmao-model-trigger');
     return {
       triggerFound: true,
       currentModel: selectedLabel,
@@ -3698,8 +3712,8 @@ const composerProbeScript = (probeSession = true) => pageScript(async (
       status: number;
       error: string;
     };
-    const cacheHost = window as typeof window & { __yaochuangSessionProbe?: SessionProbeCache };
-    const cached = cacheHost.__yaochuangSessionProbe;
+    const cacheHost = window as typeof window & { __xiangmaoSessionProbe?: SessionProbeCache };
+    const cached = cacheHost.__xiangmaoSessionProbe;
     const cacheLifetime =
       cached?.error || cached?.unauthenticated ? Math.min(1500, sessionProbeCacheMs) : sessionProbeCacheMs;
     if (cached && Date.now() - cached.checkedAt < cacheLifetime) {
@@ -3729,7 +3743,7 @@ const composerProbeScript = (probeSession = true) => pageScript(async (
       } finally {
         window.clearTimeout(timeoutId);
       }
-      cacheHost.__yaochuangSessionProbe = {
+      cacheHost.__xiangmaoSessionProbe = {
         checkedAt: Date.now(),
         authenticated: sessionAuthenticated,
         unauthenticated: sessionUnauthenticated,
@@ -3827,7 +3841,7 @@ const markComposerFileInputScript = (marker: string) =>
       textbox?.closest('[class*="composer"]') ||
       textbox?.parentElement?.parentElement?.parentElement;
     const allInputs = [...document.querySelectorAll('input[type="file"]')] as HTMLInputElement[];
-    for (const input of allInputs) input.removeAttribute('data-yaochuang-upload-target');
+    for (const input of allInputs) input.removeAttribute('data-xiangmao-upload-target');
     const scopedInputs = composer ? ([...composer.querySelectorAll('input[type="file"]')] as HTMLInputElement[]) : [];
     // A page-level hidden file input may belong to account/settings UI. Only
     // inject through an input owned by the active composer; drag/drop is the
@@ -3845,7 +3859,7 @@ const markComposerFileInputScript = (marker: string) =>
       })
       .sort((a, b) => b.score - a.score)[0]?.input;
     if (!selected) return { selected: false, inputCount: allInputs.length, scopedCount: scopedInputs.length, accept: '', multiple: false };
-    selected.setAttribute('data-yaochuang-upload-target', token);
+    selected.setAttribute('data-xiangmao-upload-target', token);
     return {
       selected: true,
       inputCount: allInputs.length,
@@ -5205,7 +5219,7 @@ const collectImageBaselineScript = pageScript(() => {
     const fingerprint = `${sourceType}|${src}|${width}x${height}`;
     // ChatGPT can reuse a cached image URL in a later response. Keep a node-level
     // marker so the result scan can distinguish an old DOM node from a new reply.
-    element.setAttribute('data-yaochuang-before-send-image', fingerprint);
+    element.setAttribute('data-xiangmao-before-send-image', fingerprint);
     const role = element.closest('[data-message-author-role]')?.getAttribute('data-message-author-role') || '';
     const inComposer = Boolean(element.closest('form, [data-testid*="composer"], textarea, [contenteditable="true"]'));
     return {
@@ -5400,7 +5414,7 @@ const generatedImageSnapshotScript = (baseline: ChatGptImageBaseline) =>
         domSignature: `${sourceType}:${Math.round(box.top)}:${Math.round(box.left)}:${width}x${height}`,
         dataUrl,
         isKnown: knownSources.has(src) || knownFingerprints.has(fingerprint),
-        isPreexistingNode: element.getAttribute('data-yaochuang-before-send-image') === fingerprint,
+        isPreexistingNode: element.getAttribute('data-xiangmao-before-send-image') === fingerprint,
         isInNewResponse,
         isUserAttachment,
         isDecorative: decorativePattern.test(`${element.getAttribute('alt') || ''} ${element.getAttribute('class') || ''} ${element.getAttribute('aria-label') || ''} ${src}`)
@@ -6076,7 +6090,7 @@ async function setChatGptFileInputFiles(webContents: ChatGptWebContentsLike, fil
       throw new Error(`待上传图片不存在：${file}`);
     });
   }
-  const marker = `yaochuang-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const marker = `xiangmao-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const marked = await evalInPageWithTimeout<{
     selected: boolean;
     inputCount: number;
@@ -6098,7 +6112,7 @@ async function setChatGptFileInputFiles(webContents: ChatGptWebContentsLike, fil
     const { root } = (await debuggerApi.sendCommand('DOM.getDocument', { depth: -1, pierce: true })) as { root: { nodeId: number } };
     const { nodeId } = (await debuggerApi.sendCommand('DOM.querySelector', {
       nodeId: root.nodeId,
-      selector: `input[data-yaochuang-upload-target="${marker}"]`
+      selector: `input[data-xiangmao-upload-target="${marker}"]`
     })) as { nodeId: number };
 
     if (!nodeId) throw new Error('已经定位 composer 上传入口，但 CDP 无法取得对应节点。');
@@ -6111,7 +6125,7 @@ async function setChatGptFileInputFiles(webContents: ChatGptWebContentsLike, fil
     await evalInPageWithTimeout<boolean>(
       webContents,
       pageScript((token: string) => {
-        document.querySelector(`input[data-yaochuang-upload-target="${token}"]`)?.removeAttribute('data-yaochuang-upload-target');
+        document.querySelector(`input[data-xiangmao-upload-target="${token}"]`)?.removeAttribute('data-xiangmao-upload-target');
         return true;
       }, marker),
       1500
@@ -6717,7 +6731,7 @@ async function automateGeminiSend(
   const automationUrl = freshGeminiConversationUrl(settings.geminiUrl);
   let activeWindow = taskContext?.window;
   try {
-    emitAutomationStatus(event, { step: '正在后台打开 Gemini', detail: '使用同一个耀创工坊专属 Chrome，不会启动第二个浏览器进程。' });
+    emitAutomationStatus(event, { step: '正在后台打开 Gemini', detail: '使用同一个像锚专属 Chrome，不会启动第二个浏览器进程。' });
     const win = activeWindow || await getGeminiWindow(automationUrl, 'background');
     activeWindow = win;
     if (taskContext) {
@@ -6957,7 +6971,7 @@ async function automateChatGptSend(
   };
   try {
     await assertChatGptAutomationStartAllowed();
-    emitAutomationStatus(event, { step: '正在后台打开 ChatGPT', detail: '自动窗口将在后台运行，不会遮挡耀创工坊。' });
+    emitAutomationStatus(event, { step: '正在后台打开 ChatGPT', detail: '自动窗口将在后台运行，不会遮挡像锚。' });
     const backend = resolveChatGptBrowserBackend(settings.chatGptBrowserBackend);
     const win = activeWindow || (await getChatGptWindow(automationUrl, backend, 'background'));
     activeWindow = win;
@@ -8883,7 +8897,7 @@ async function monitorDedicatedChromeLogin(win: ChatGptWindowLike) {
           loggedIn: true,
           needsLogin: false,
           usable: true,
-          message: '耀创工坊专属 Chrome 已登录，自动化将在后台运行。',
+          message: '像锚专属 Chrome 已登录，自动化将在后台运行。',
           url: win.webContents.getURL(),
           backend: 'chrome'
         };
@@ -9059,7 +9073,7 @@ async function checkChatGptLogin(
         usable: true,
         message:
           backend === 'chrome'
-            ? '耀创工坊专属 Chrome 已登录，自动化将在后台运行。'
+            ? '像锚专属 Chrome 已登录，自动化将在后台运行。'
             : 'ChatGPT 自动窗口已登录。',
         url: currentUrl,
         backend
@@ -9080,7 +9094,7 @@ async function checkChatGptLogin(
         usable: false,
         message:
           backend === 'chrome'
-            ? '耀创工坊专属 Chrome 需要完成登录。请点击“查看窗口”处理。'
+            ? '像锚专属 Chrome 需要完成登录。请点击“查看窗口”处理。'
             : 'ChatGPT 自动窗口需要重新登录。使用 Google 登录时会自动切换到专属 Chrome。',
         url: currentUrl,
         backend
@@ -9107,7 +9121,7 @@ async function checkChatGptLogin(
         usable: true,
         message:
           backend === 'chrome'
-            ? '耀创工坊专属 Chrome 已登录；本次页面复核暂未完成，将继续使用已确认的会话。'
+            ? '像锚专属 Chrome 已登录；本次页面复核暂未完成，将继续使用已确认的会话。'
             : 'ChatGPT 自动窗口已登录；本次页面复核暂未完成，将继续使用已确认的会话。',
         url: currentUrl,
         backend
@@ -10412,7 +10426,7 @@ async function analyzeMainImageWithGemini(
     tempFilePath = await writeAnalysisImageTempFile(payload.imageDataUrl);
     const analysisInstruction = `${instruction}
 
-你现在看到的是耀创工坊生成的原图分析拼图：左侧是全图构图与场景基准，右侧是红圈人脸特写。请只完成视觉分析，不要生成图片，也不要复述提示词。`;
+你现在看到的是像锚生成的原图分析拼图：左侧是全图构图与场景基准，右侧是红圈人脸特写。请只完成视觉分析，不要生成图片，也不要复述提示词。`;
     let textResult: Awaited<ReturnType<typeof waitForGeminiTextResult>> | undefined;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       if (attempt > 0) {
@@ -10821,7 +10835,7 @@ async function analyzeMainImageWithChatGpt(
 
     const chatGptInstruction = `${instruction}
 
-你现在看到的是耀创工坊生成的原图分析拼图：左侧是全图构图与场景基准，右侧是红圈人脸特写。请优先使用你自己的视觉理解能力，写具体可见细节，不要复述提示词，也不要生成图片。`;
+你现在看到的是像锚生成的原图分析拼图：左侧是全图构图与场景基准，右侧是红圈人脸特写。请优先使用你自己的视觉理解能力，写具体可见细节，不要复述提示词，也不要生成图片。`;
     emitMainImageAnalysisStatus(event, { step: '正在发送分析指令给 ChatGPT', detail: '等待 ChatGPT 返回结构化 JSON。', level: 'info', model: 'ChatGPT' });
     await dismissOpenMenus(webContents);
     const promptSet = await evalChatGptMutation<boolean>(webContents, setPromptScript(chatGptInstruction), 6000);
@@ -11197,7 +11211,7 @@ function assertTrustedIpcSender(event: IpcMainInvokeEvent) {
     Boolean(senderFrame?.parent) ||
     !isTrustedMainRendererUrl(senderUrl)
   ) {
-    throw new Error('已拒绝非耀创工坊主界面的操作请求。');
+    throw new Error('已拒绝非像锚主界面的操作请求。');
   }
 }
 
@@ -11233,7 +11247,7 @@ async function showMainWindowLoadFailure(win: BrowserWindow, reason: string) {
   if (win.isDestroyed()) return;
   mainWindowFailurePages.add(win);
   await appendElectronRuntimeDiagnostic('main-window-failure-page', { reason });
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><title>耀创工坊启动异常</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111216;color:#f4f4f5;font-family:"Segoe UI Variable","Microsoft YaHei UI",sans-serif}.panel{width:min(520px,calc(100vw - 48px));padding:24px;border:1px solid #3f3f46;border-radius:8px;background:#18181b}.panel h1{margin:0 0 12px;font-size:20px}.panel p{margin:8px 0;color:#c4c4cc;line-height:1.7}.reason{font-family:Consolas,monospace;color:#f2c66d;word-break:break-word}</style></head><body><main class="panel"><h1>耀创工坊界面未能加载</h1><p>程序已经记录启动诊断。请完全退出后重新打开；若仍出现，请保留 AppData 日志用于定位。</p><p class="reason">${reason.replace(/[<>&"']/g, '')}</p></main></body></html>`;
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><title>像锚启动异常</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111216;color:#f4f4f5;font-family:"Segoe UI Variable","Microsoft YaHei UI",sans-serif}.panel{width:min(520px,calc(100vw - 48px));padding:24px;border:1px solid #3f3f46;border-radius:8px;background:#18181b}.panel h1{margin:0 0 12px;font-size:20px}.panel p{margin:8px 0;color:#c4c4cc;line-height:1.7}.reason{font-family:Consolas,monospace;color:#f2c66d;word-break:break-word}</style></head><body><main class="panel"><h1>像锚界面未能加载</h1><p>程序已经记录启动诊断。请完全退出后重新打开；若仍出现，请保留 AppData 日志用于定位。</p><p class="reason">${reason.replace(/[<>&"']/g, '')}</p></main></body></html>`;
   await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`).catch(() => undefined);
   if (!win.isDestroyed()) win.show();
 }
@@ -11245,7 +11259,7 @@ async function createWindow() {
     ...initialBounds,
     minWidth: Math.min(1024, initialBounds.width),
     minHeight: Math.min(600, initialBounds.height),
-    title: '耀创工坊',
+    title: '像锚',
     icon: getTrayIconPath(),
     backgroundColor: '#08090b',
     show: false,
@@ -11732,12 +11746,21 @@ function registerIpc() {
         throw new Error('未找到与预览对应的完整原图，请重新导入原图后再进行面部自然化。');
       }
       const nextFile = await nextFaceNaturalizationFile(resultDir, payload.image.name);
+      let source: Buffer | undefined;
+      const sourceImage = payload.sourceImage;
+      if (sourceImage && typeof sourceImage.dataUrl === 'string' && sourceImage.dataUrl.startsWith('data:image/')) {
+        const decodedSource = dataUrlToBuffer(sourceImage.dataUrl);
+        if (decodedSource.mime.startsWith('image/') && decodedSource.buffer.length > 32 && decodedSource.buffer.length <= 48 * 1024 * 1024) {
+          source = decodedSource.buffer;
+        }
+      }
       const finished = await writeFaceNaturalizationCopy(input, nextFile.filePath, {
         data: decodedMask.buffer,
         x: mask.x,
         y: mask.y,
         width: mask.width,
-        height: mask.height
+        height: mask.height,
+        source
       });
       const createdAt = new Date().toISOString();
       return {
@@ -11752,7 +11775,7 @@ function registerIpc() {
           dataUrl: jpegPreviewDataUrl(finished.buffer, finished.width, finished.height),
           path: nextFile.filePath,
           promptText: payload.image.promptText,
-          dimensionAdjustment: '仅对识别到的人脸区域做轻度自然化处理，背景和服装未修改。',
+          dimensionAdjustment: '只在识别到的人脸皮肤上贴回主垫图的毛孔和噪点，背景和服装未修改。',
           createdAt,
           source: 'face-naturalization'
         }
@@ -11764,9 +11787,9 @@ function registerIpc() {
 
   registerTrustedIpcHandler('project:save', async (_event, project: ProjectState) => {
     const result = await dialog.showSaveDialog({
-      title: '保存耀创工坊项目',
-      defaultPath: `${safeName(project.projectName)}.masklock.json`,
-      filters: [{ name: '耀创工坊项目', extensions: ['json'] }]
+      title: '保存像锚项目',
+      defaultPath: `${safeName(project.projectName)}.xiangmao.json`,
+      filters: [{ name: '像锚项目', extensions: ['json'] }]
     });
     if (result.canceled || !result.filePath) return { canceled: true };
     await fs.writeFile(result.filePath, JSON.stringify({ ...project, projectPath: result.filePath }, null, 2), 'utf8');
@@ -11775,9 +11798,9 @@ function registerIpc() {
 
   registerTrustedIpcHandler('project:import', async () => {
     const result = await dialog.showOpenDialog({
-      title: '导入耀创工坊项目',
+      title: '导入像锚项目',
       properties: ['openFile'],
-      filters: [{ name: '耀创工坊项目', extensions: ['json'] }]
+      filters: [{ name: '像锚项目', extensions: ['json'] }]
     });
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
     const raw = await fs.readFile(result.filePaths[0], 'utf8');
@@ -11883,7 +11906,7 @@ function registerIpc() {
     const promptMdName = `${String(assetCount + 3).padStart(2, '0')}_最终提示词.md`;
     const guideName = `${String(assetCount + 4).padStart(2, '0')}_${generationProviderLabel}操作说明.txt`;
     const manifestName = `${String(assetCount + 5).padStart(2, '0')}_导出清单.json`;
-    const projectJsonName = `${String(assetCount + 6).padStart(2, '0')}_项目备份.masklock.json`;
+    const projectJsonName = `${String(assetCount + 6).padStart(2, '0')}_项目备份.xiangmao.json`;
     const zipName = `${String(assetCount + 7).padStart(2, '0')}_发送包.zip`;
     const coreRule = project.wardrobeReferences.length
       ? '人脸只在红圈内替换；穿搭只在指定服饰配饰目标区域替换；其余内容完全不变。'
@@ -12324,7 +12347,7 @@ function registerIpc() {
 sceneDescription：用1到2句写可见场景、背景、构图、拍摄质感和画质。
 poseDescription：用1到2句写身体朝向、肩颈姿态、手部或道具、人物与镜头距离。
 faceDirectionDescription：用1到2句写头部角度、脸部朝向、下巴、眼神、表情和嘴唇状态。
-lightingMakeupDescription：用3到5句写面部光源颜色与方向、额头鼻梁脸颊的亮面、眼窝鼻翼下颌的阴影、妆容浓淡、肤色、皮肤纹理、噪点压缩痕迹和手机拍摄清晰度。
+lightingMakeupDescription：用3到5句写面部光源颜色与方向、额头鼻梁脸颊的亮面、眼窝鼻翼下颌的阴影、妆容浓淡、肤色、皮肤纹理、毛孔、噪点压缩痕迹和手机拍摄清晰度。按照片里实际可见的皮肤写，不要写成磨皮、通透或棚拍质感。
 必须写具体可见细节：例如室内/室外、墙面/家具/镜子/窗户/地面/背景物、人物在画面中的位置、镜头距离、画幅比例、清晰度、噪点和压缩感。不要只写“室内场景”“姿态”“侧脸”“柔和光线”这类笼统短语。
 precisionNotes：必须原样填写下面这句话，不要在句子外添加引号：红圈内的人脸替换要融入原图，维持红圈内原先面部光影、手机拍摄普通画质和真实皮肤质感，红圈外完全不变，不要简单把头P过去。`;
 

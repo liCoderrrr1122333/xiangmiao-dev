@@ -116,6 +116,7 @@ export interface FaceNaturalizationRequest {
   projectName: string;
   image: ImageAsset;
   mask: FaceNaturalizationRaster;
+  sourceImage?: Pick<ImageAsset, 'dataUrl' | 'width' | 'height'>;
 }
 
 export interface FaceNaturalizationResponse {

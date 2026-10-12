@@ -7,7 +7,7 @@ import { createChromeChatGptWindow } from '../dist-electron/main/chromeChatGpt.j
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixturePath = path.join(repoDir, 'tests', 'fixtures', 'chatgpt', 'attachment-composer.html');
-const tempRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-attachment-fixture');
+const tempRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-attachment-fixture');
 const profileDir = path.join(tempRoot, `profile-${process.pid}`);
 const compiledMain = fs.readFileSync(path.join(repoDir, 'dist-electron', 'main', 'index.js'), 'utf8');
 
@@ -55,7 +55,7 @@ try {
   assert.equal(marked.scopedCount, 1);
   assert.equal(marked.selected, true);
   assert.equal(
-    await webContents.executeJavaScript(`document.querySelector('[data-yaochuang-upload-target="${marker}"]')?.id`, true),
+    await webContents.executeJavaScript(`document.querySelector('[data-xiangmao-upload-target="${marker}"]')?.id`, true),
     'file-input',
     'the upload target must belong to the active ChatGPT composer'
   );

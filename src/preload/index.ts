@@ -26,7 +26,7 @@ import type {
 import type { AnalysisProvider } from '../shared/analysisProviderPolicy.js';
 import type { WebAiProvider } from '../shared/webAiProviderPolicy.js';
 
-contextBridge.exposeInMainWorld('masklock', {
+contextBridge.exposeInMainWorld('xiangmao', {
   windowMinimize: () => ipcRenderer.invoke('window:minimize'),
   windowToggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
   windowClose: () => ipcRenderer.invoke('window:close'),

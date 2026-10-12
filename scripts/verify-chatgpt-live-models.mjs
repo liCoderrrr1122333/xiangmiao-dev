@@ -7,7 +7,7 @@ import { _electron as electron } from 'playwright-core';
 
 const projectRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const electronExecutable = path.join(projectRoot, 'node_modules', 'electron', 'dist', 'electron.exe');
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\chatgpt-live-models');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\chatgpt-live-models');
 
 if (!existsSync(electronExecutable)) throw new Error(`Electron executable is missing: ${electronExecutable}`);
 await mkdir(artifactRoot, { recursive: true });
@@ -35,8 +35,8 @@ try {
   }
 
   const catalog = await page.evaluate(async () => {
-    if (!window.masklock?.listWebAiModels) throw new Error('The web AI model bridge is unavailable.');
-    return window.masklock.listWebAiModels({
+    if (!window.xiangmao?.listWebAiModels) throw new Error('The web AI model bridge is unavailable.');
+    return window.xiangmao.listWebAiModels({
       provider: 'chatgpt',
       url: 'https://chatgpt.com/',
       backend: 'chrome'

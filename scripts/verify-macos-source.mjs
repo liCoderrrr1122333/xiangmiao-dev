@@ -11,7 +11,7 @@ if (process.platform !== 'darwin') throw new Error('此验证必须在 macOS 上
 const projectRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const electronExecutable = path.join(projectRoot, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron');
 const packageMetadata = JSON.parse(await readFile(path.join(projectRoot, 'package.json'), 'utf8'));
-const artifactRoot = path.join(os.tmpdir(), `yaochuang-mac-source-${process.pid}`);
+const artifactRoot = path.join(os.tmpdir(), `xiangmao-mac-source-${process.pid}`);
 const userDataDir = path.join(artifactRoot, 'user-data');
 
 assert.equal(existsSync(electronExecutable), true, `Electron 不存在：${electronExecutable}`);
@@ -22,7 +22,7 @@ const electronApp = await electron.launch({
   executablePath: electronExecutable,
   args: [projectRoot],
   cwd: projectRoot,
-  env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userDataDir }
+  env: { ...process.env, XIANGMAO_USER_DATA_DIR: userDataDir }
 });
 
 try {
@@ -44,8 +44,8 @@ try {
     if (message.type() === 'error') rendererErrors.push(message.text());
   });
   await page.locator('.levitated-workbench').waitFor({ state: 'visible', timeout: 30_000 });
-  assert.equal(await page.title(), '耀创工坊');
-  assert.equal(await page.evaluate(() => Boolean(window.masklock)), true);
+  assert.equal(await page.title(), '像锚');
+  assert.equal(await page.evaluate(() => Boolean(window.xiangmao)), true);
   assert.deepEqual(rendererErrors, []);
   console.log(JSON.stringify({ ok: true, runtime, rendererErrors }, null, 2));
 } finally {

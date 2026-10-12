@@ -46,7 +46,7 @@ export function ResultArchivePanel() {
             {latest.filePath && <code>{latest.filePath}</code>}
           </div>
           {latest.filePath && (
-            <button type="button" onClick={() => window.masklock?.openPath(folderFromPath(latest.filePath) || latest.filePath!)}>
+            <button type="button" onClick={() => window.xiangmao?.openPath(folderFromPath(latest.filePath) || latest.filePath!)}>
               <FolderOpen /> 打开文件夹
             </button>
           )}
@@ -109,7 +109,7 @@ export function ResultArchivePanel() {
                 <Trash2 /> 删除
               </button>
               {item.filePath && (
-                <button type="button" onClick={() => window.masklock?.openPath(folderFromPath(item.filePath) || item.filePath!)}>
+                <button type="button" onClick={() => window.xiangmao?.openPath(folderFromPath(item.filePath) || item.filePath!)}>
                   <FolderOpen /> 文件夹
                 </button>
               )}

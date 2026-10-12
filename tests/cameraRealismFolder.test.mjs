@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -19,7 +19,7 @@ async function populateFolder(root, count) {
 for (const count of [1, 20]) {
   test(`folder scan keeps ${count} valid images selectable`, async () => {
     const { scanCameraRealismFolder } = await import('../dist-electron/main/cameraRealismFolder.js');
-    const root = await mkdtemp(path.join(tmpdir(), `yaochuang-camera-folder-${count}-`));
+    const root = await mkdtemp(path.join(tmpdir(), `xiangmao-camera-folder-${count}-`));
     try {
       await populateFolder(root, count);
       const scan = await scanCameraRealismFolder(root);
@@ -33,7 +33,7 @@ for (const count of [1, 20]) {
 
 test('folder scan supports one hundred images and keeps corrupt files isolated', async () => {
   const { scanCameraRealismFolder } = await import('../dist-electron/main/cameraRealismFolder.js');
-  const root = await mkdtemp(path.join(tmpdir(), 'yaochuang-camera-folder-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'xiangmao-camera-folder-'));
   try {
     await populateFolder(root, 100);
     await writeFile(path.join(root, 'broken.jpg'), 'not-an-image', 'utf8');
@@ -55,7 +55,7 @@ test('folder scan supports one hundred images and keeps corrupt files isolated',
 test('HEIC is only selectable after a real HEIF decode', async () => {
   const { default: sharp } = await import('sharp');
   const { scanCameraRealismFolder } = await import('../dist-electron/main/cameraRealismFolder.js');
-  const root = await mkdtemp(path.join(tmpdir(), 'yaochuang-camera-heic-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'xiangmao-camera-heic-'));
   try {
     await sharp({
       create: { width: 32, height: 24, channels: 3, background: '#222222' }
@@ -73,11 +73,11 @@ test('folder outputs stay inside a new timestamped directory and never overwrite
     createCameraRealismFolderOutputDirectory,
     nextCameraRealismFolderOutputPath
   } = await import('../dist-electron/main/cameraRealismFolder.js');
-  const root = await mkdtemp(path.join(tmpdir(), 'yaochuang-camera-output-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'xiangmao-camera-output-'));
   try {
     const outputDir = await createCameraRealismFolderOutputDirectory(root, new Date('2026-08-23T12:34:56'));
-    assert.equal(path.dirname(outputDir), root);
-    assert.match(path.basename(outputDir), /^耀创工坊_降AI感_20260823_123456/);
+    assert.equal(path.dirname(outputDir), await realpath(root));
+    assert.match(path.basename(outputDir), /^像锚_降AI感_20260823_123456/);
 
     const first = await nextCameraRealismFolderOutputPath(outputDir, 'portrait.png');
     await writeFile(first, 'existing', 'utf8');

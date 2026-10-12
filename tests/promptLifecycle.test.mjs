@@ -250,8 +250,9 @@ test('autosave is hydration-gated, backed up, and replaced through a temporary f
   const main = await readFile(new URL('../src/main/index.ts', import.meta.url), 'utf8');
   assert.match(app, /projectHydration !== 'ready'/);
   assert.match(app, /if \(!settings\.autoSave \|\| projectHydration !== 'ready'\) return/);
-  assert.match(main, /autosave\.masklock\.backup\.json/);
+  assert.match(main, /const autosaveBackupPath = \(\) => autosavePath\(\)\.replace/);
+  assert.match(main, /autosave\.masklock\.json/);
   assert.match(main, /async function replaceFileAtomically/);
-  assert.match(main, /autosave\.masklock\.corrupt-/);
+  assert.match(main, /autosave\.xiangmao\.corrupt-/);
   assert.match(main, /status: 'recovered-backup'/);
 });

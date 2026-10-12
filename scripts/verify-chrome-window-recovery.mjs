@@ -31,7 +31,7 @@ Add-Type @'
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-public static class YaochuangWindowProbe {
+public static class XiangmaoWindowProbe {
   [StructLayout(LayoutKind.Sequential)]
   public struct RECT {
     public int Left;
@@ -55,24 +55,24 @@ $managedPids = @(Get-CimInstance Win32_Process -Filter "Name = 'chrome.exe'" |
   Where-Object { $_.CommandLine -like "*--user-data-dir=$profile*" } |
   ForEach-Object { [int]$_.ProcessId })
 $windows = New-Object 'System.Collections.Generic.List[object]'
-[YaochuangWindowProbe]::EnumWindows({
+[XiangmaoWindowProbe]::EnumWindows({
   param($handle, $parameter)
   $processId = [uint32]0
-  [YaochuangWindowProbe]::GetWindowThreadProcessId($handle, [ref]$processId) | Out-Null
+  [XiangmaoWindowProbe]::GetWindowThreadProcessId($handle, [ref]$processId) | Out-Null
   if ($managedPids -notcontains [int]$processId) { return $true }
   $className = New-Object System.Text.StringBuilder 128
-  [YaochuangWindowProbe]::GetClassName($handle, $className, $className.Capacity) | Out-Null
+  [XiangmaoWindowProbe]::GetClassName($handle, $className, $className.Capacity) | Out-Null
   if ($className.ToString() -ne 'Chrome_WidgetWin_1') { return $true }
   $title = New-Object System.Text.StringBuilder 512
-  [YaochuangWindowProbe]::GetWindowText($handle, $title, $title.Capacity) | Out-Null
-  $rect = New-Object YaochuangWindowProbe+RECT
-  [YaochuangWindowProbe]::GetWindowRect($handle, [ref]$rect) | Out-Null
-  $style = [YaochuangWindowProbe]::GetWindowLong($handle, -16)
+  [XiangmaoWindowProbe]::GetWindowText($handle, $title, $title.Capacity) | Out-Null
+  $rect = New-Object XiangmaoWindowProbe+RECT
+  [XiangmaoWindowProbe]::GetWindowRect($handle, [ref]$rect) | Out-Null
+  $style = [XiangmaoWindowProbe]::GetWindowLong($handle, -16)
   $windows.Add([pscustomobject]@{
     Handle = $handle.ToInt64()
     ProcessId = $processId
     Title = $title.ToString()
-    Visible = [YaochuangWindowProbe]::IsWindowVisible($handle)
+    Visible = [XiangmaoWindowProbe]::IsWindowVisible($handle)
     Caption = (($style -band 0x00C00000) -eq 0x00C00000)
     ThickFrame = (($style -band 0x00040000) -eq 0x00040000)
     Left = $rect.Left
@@ -99,7 +99,7 @@ function moveMainWindowOffscreen() {
     buildWindowProbe(`
 $mainWindow = $windows | Where-Object Caption | Select-Object -First 1
 if (-not $mainWindow) { throw 'No captioned dedicated Chrome window was found.' }
-[YaochuangWindowProbe]::SetWindowPos(
+[XiangmaoWindowProbe]::SetWindowPos(
   [IntPtr]$mainWindow.Handle,
   [IntPtr]::Zero,
   -1025,

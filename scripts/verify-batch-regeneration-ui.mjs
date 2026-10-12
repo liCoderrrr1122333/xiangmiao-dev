@@ -7,10 +7,10 @@ import { _electron as electron, chromium } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const distRoot = path.join(repoRoot, 'dist');
-const chromePath = process.env.YAOCHUANG_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const imagePath = process.env.YAOCHUANG_TEST_IMAGE || path.join(repoRoot, 'public', 'yaochuang-unified-v2.png');
-const electronPath = process.env.YAOCHUANG_ELECTRON_PATH;
-const electronAppPath = process.env.YAOCHUANG_ELECTRON_APP;
+const chromePath = process.env.XIANGMAO_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const imagePath = process.env.XIANGMAO_TEST_IMAGE || path.join(repoRoot, 'public', 'xiangmao-unified-v2.png');
+const electronPath = process.env.XIANGMAO_ELECTRON_PATH;
+const electronAppPath = process.env.XIANGMAO_ELECTRON_APP;
 const packageMetadata = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const mimeTypes = new Map([
   ['.css', 'text/css; charset=utf-8'],
@@ -57,10 +57,10 @@ async function createStaticServer() {
   return { server, url: `http://127.0.0.1:${address.port}` };
 }
 
-const staticServer = !electronPath && !process.env.YAOCHUANG_TEST_URL
+const staticServer = !electronPath && !process.env.XIANGMAO_TEST_URL
   ? await createStaticServer()
   : undefined;
-const appUrl = process.env.YAOCHUANG_TEST_URL || staticServer?.url;
+const appUrl = process.env.XIANGMAO_TEST_URL || staticServer?.url;
 assert.ok(electronPath || appUrl, 'A packaged Electron path or a local test URL is required.');
 
 const electronApp = electronPath
@@ -69,8 +69,8 @@ const electronApp = electronPath
       args: electronAppPath ? [electronAppPath] : undefined,
       env: {
         ...process.env,
-        YAOCHUANG_USER_DATA_DIR:
-          process.env.YAOCHUANG_USER_DATA_DIR || 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-stability\\batch-regeneration-user-data'
+        XIANGMAO_USER_DATA_DIR:
+          process.env.XIANGMAO_USER_DATA_DIR || 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-stability\\batch-regeneration-user-data'
       }
     })
   : undefined;
@@ -87,7 +87,7 @@ try {
   });
 
   if (!electronApp) await page.goto(appUrl, { waitUntil: 'networkidle' });
-  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入像锚' });
   const startupNoticeShown = electronApp
     ? await startupNoticeConfirm.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false)
     : false;

@@ -84,7 +84,7 @@ export function DescriptionPanel({
   const readyCount = [sceneReady, poseReady, faceReady, lightReady].filter(Boolean).length;
 
   useEffect(() => {
-    return window.masklock?.onMainImageAnalysisStatus((status) => {
+    return window.xiangmao?.onMainImageAnalysisStatus((status) => {
       const detail = status.detail ? `：${status.detail}` : '';
       setAnalysisStatus(`${status.step}${detail}`);
       if (status.level === 'error') setAnalysisStatusLevel('error');
@@ -94,7 +94,7 @@ export function DescriptionPanel({
   }, []);
 
   useEffect(() => {
-    return window.masklock?.onWebPoseAnalysisStatus((status) => {
+    return window.xiangmao?.onWebPoseAnalysisStatus((status) => {
       const detail = status.detail ? `：${status.detail}` : '';
       setPoseStatus(`${status.step}${detail}`);
       if (status.level === 'error') setPoseStatusLevel('error');
@@ -104,7 +104,7 @@ export function DescriptionPanel({
   }, []);
 
   useEffect(() => {
-    return window.masklock?.onLocalAnalysisModelProgress((status) => {
+    return window.xiangmao?.onLocalAnalysisModelProgress((status) => {
       setLocalModelStatus(status);
       setIsPreparingLocalModel(status.state === 'downloading');
     });
@@ -113,7 +113,7 @@ export function DescriptionPanel({
   useEffect(() => {
     if (analysisProvider !== 'ollama') return;
     let active = true;
-    void window.masklock?.getLocalAnalysisModelStatus({
+    void window.xiangmao?.getLocalAnalysisModelStatus({
       baseUrl: settings.apiBaseUrl,
       model: settings.apiVisionModel
     }).then((status) => {
@@ -167,13 +167,13 @@ export function DescriptionPanel({
     setSettings(provider === 'ollama' && usesDoubaoLocalFields
       ? { apiProvider: provider, apiBaseUrl: 'http://127.0.0.1:11434', apiVisionModel: 'auto' }
       : { apiProvider: provider });
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   async function prepareLocalAnalysisModel() {
     if (isPreparingLocalModel) return;
     if (localModelStatus?.state === 'service-missing') {
-      await window.masklock?.openExternal(localModelStatus.downloadUrl || 'https://ollama.com/download/windows');
+      await window.xiangmao?.openExternal(localModelStatus.downloadUrl || 'https://ollama.com/download/windows');
       setLocalModelStatus({
         ...localModelStatus,
         message: '已打开官方下载页。安装完成后回到这里点击“重新检测”。'
@@ -182,7 +182,7 @@ export function DescriptionPanel({
     }
     setIsPreparingLocalModel(true);
     try {
-      const status = await window.masklock?.prepareLocalAnalysisModel({
+      const status = await window.xiangmao?.prepareLocalAnalysisModel({
         baseUrl: settings.apiBaseUrl,
         model: settings.apiVisionModel
       });
@@ -193,7 +193,7 @@ export function DescriptionPanel({
   }
 
   async function refreshLocalAnalysisModel() {
-    const status = await window.masklock?.getLocalAnalysisModelStatus({
+    const status = await window.xiangmao?.getLocalAnalysisModelStatus({
       baseUrl: settings.apiBaseUrl,
       model: settings.apiVisionModel
     });
@@ -214,7 +214,7 @@ export function DescriptionPanel({
       const analysisImageDataUrl = await createAnalysisImage(project.mainImage, project.maskCircle, 768, 0.82);
       const startedAt = performance.now();
       setAnalysisStatus('AI 正在读取场景、动作、面部朝向和光影...');
-      const result = await window.masklock?.apiAnalyzeMainImage({
+      const result = await window.xiangmao?.apiAnalyzeMainImage({
         provider: analysisProvider,
         apiKey: settings.apiKeySessionOnly,
         imageDataUrl: analysisImageDataUrl,
@@ -249,7 +249,7 @@ export function DescriptionPanel({
       ) {
         const nextSettings = { ...settings, apiVisionModel: result.model };
         setSettings({ apiVisionModel: result.model });
-        void window.masklock?.writeSettings(nextSettings);
+        void window.xiangmao?.writeSettings(nextSettings);
       }
       const seconds = Math.max(1, Math.round((performance.now() - startedAt) / 1000));
       setAnalysisStatusLevel(result.degraded ? 'warning' : 'done');
@@ -280,7 +280,7 @@ export function DescriptionPanel({
     const mainImageId = project.mainImage.id;
     try {
       const analysisImageDataUrl = await createAnalysisImage(project.mainImage, undefined, 1024, 0.86);
-      const result = await window.masklock?.apiAnalyzeWebPoses({
+      const result = await window.xiangmao?.apiAnalyzeWebPoses({
         provider: analysisProvider,
         imageDataUrl: analysisImageDataUrl,
         baseUrl: analysisProvider === 'doubao' ? DOUBAO_ANALYSIS_BASE_URL : settings.apiBaseUrl,
@@ -393,7 +393,7 @@ export function DescriptionPanel({
                   const doubaoAnalysisModel = normalizeDoubaoAnalysisModel(event.target.value);
                   const nextSettings = { ...settings, doubaoAnalysisModel };
                   setSettings({ doubaoAnalysisModel });
-                  void window.masklock?.writeSettings(nextSettings);
+                  void window.xiangmao?.writeSettings(nextSettings);
                 }}
               >
                 {DOUBAO_ANALYSIS_MODELS.map((item) => (

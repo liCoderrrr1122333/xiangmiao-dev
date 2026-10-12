@@ -42,9 +42,9 @@ export function ProjectToolbar({
   return (
     <header className="topbar">
       <div className="brand">
-        <img className="logo-mark" src="./yaochuang-tray.png" alt="" aria-hidden="true" width="34" height="34" />
+        <img className="logo-mark" src="./xiangmao-tray.png" alt="" aria-hidden="true" width="34" height="34" />
         <div>
-          <strong>耀创工坊</strong>
+          <strong>像锚</strong>
         </div>
       </div>
       <input

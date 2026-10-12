@@ -73,7 +73,7 @@ async function withoutKnownMediaPipeDiagnostics<T>(operation: () => T | Promise<
 
 async function createFaceMaskRuntime(): Promise<FaceMaskRuntime> {
   const { FaceLandmarker, FilesetResolver, ImageSegmenter } = await import('@mediapipe/tasks-vision');
-  const bundledAssets = await window.masklock?.loadFaceLandmarkerAssets();
+  const bundledAssets = await window.xiangmao?.loadFaceLandmarkerAssets();
   const wasmFileset = await FilesetResolver.forVisionTasks(assetUrl('wasm'));
   const faceLandmarker = await FaceLandmarker.createFromOptions(wasmFileset, {
     baseOptions: bundledAssets

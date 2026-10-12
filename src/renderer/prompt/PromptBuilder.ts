@@ -79,6 +79,22 @@ function wardrobeRule(project: ProjectState) {
 ${poseFit}`;
 }
 
+function skinTextureRule(project: ProjectState) {
+  const level = Math.max(0, Math.min(10, Math.round(project.sliders?.skinRealism ?? 9)));
+  if (level <= 3) {
+    return `【脸庞质感】
+身份来自人脸参考图。皮肤仍跟随主垫图红圈内原来的光影和清晰度，不要换成磨皮或棚拍皮肤。`;
+  }
+  if (level <= 6) {
+    return `【脸庞质感】
+五官、脸型和身份只来自人脸参考图。皮肤纹理、毛孔、噪点、清晰度和脸上的明暗只跟随主垫图红圈内原来的脸，不要搬用人脸参考图的光影或美颜肤质。`;
+  }
+  return `【脸庞质感】
+五官、脸型、眉眼、鼻型和身份只来自人脸参考图，不要保留主垫图人物的原身份。
+皮肤纹理、毛孔、细纹、汗毛、传感器噪点、压缩感和清晰度必须贴近主垫图红圈内原来那张脸。不要提高皮肤清晰度，不要磨皮，不要塑料皮，不要把参考图的棚拍光或美颜肤色搬过来。
+下颌、发际和脖子的肤色与噪点要和周围皮肤连续，不要出现一圈硬边。`;
+}
+
 function protectionBoundary(project: ProjectState) {
   const editable = [
     '目标人脸',
@@ -120,7 +136,8 @@ export function regionalPrompt(project: ProjectState, options: PromptBuildOption
     ...(project.wardrobeReferences.length ? ['不要保留已指定替换的原穿搭'] : []),
     '不要直接贴脸、贴头或平面粘贴衣物',
     '不要修改未授权区域',
-    '不要出现假脸感、穿模、错误遮挡、过度美颜、塑料皮肤或明显 AI 感'
+    '不要出现假脸感、穿模、错误遮挡、过度美颜、塑料皮肤、磨皮或明显 AI 感',
+    '不要提高皮肤清晰度，不要把人脸参考图的光影和肤质搬到主垫图上'
   ].join('；');
 
   return `【任务目标】
@@ -133,7 +150,9 @@ ${originalUnderstanding(promptProject, includeOriginalUnderstanding)}
 ${wardrobeRule(promptProject)}${poseRule ? `\n\n${poseRule}` : ''}
 
 【融合要求】
-将目标男生自然重建到红圈人物位置，不要直接贴脸或拼接头部。保持人脸、头发、手部、衣领和配饰之间真实的前后遮挡，并让肤色、光影、清晰度、噪点和真实皮肤质感融入主垫图。
+将目标男生自然重建到红圈人物位置，不要直接贴脸或拼接头部。保持人脸、头发、手部、衣领和配饰之间真实的前后遮挡。新脸的身份来自人脸参考图，脸庞质感必须回到主垫图原来的皮肤。
+
+${skinTextureRule(promptProject)}
 
 ${protectionBoundary(promptProject)}${customProtection}
 
@@ -153,7 +172,7 @@ export class PromptBuilder {
     const negativePrompt = PromptBuilder.negativePrompt(promptProject);
     return {
       id: nanoid(),
-      title: `耀创工坊 ${modeLabels[mode]}提示词`,
+      title: `像锚 ${modeLabels[mode]}提示词`,
       promptText,
       negativePrompt,
       checklist: [

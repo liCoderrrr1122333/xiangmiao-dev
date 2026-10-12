@@ -28,13 +28,13 @@ export function SendHistoryPanel({ onCopy }: { onCopy: (text?: string) => void }
             </p>
           </div>
           <div className="mini-actions">
-            <button onClick={() => window.masklock?.openPath(item.exportDir)}>
+            <button onClick={() => window.xiangmao?.openPath(item.exportDir)}>
               <FolderOpen /> 文件夹
             </button>
             <button onClick={() => onCopy(item.promptText)}>
               <Copy /> 复制提示词
             </button>
-            {providerUrl && <button onClick={() => window.masklock?.openExternal(providerUrl)}>
+            {providerUrl && <button onClick={() => window.xiangmao?.openExternal(providerUrl)}>
               <ExternalLink /> {providerLabel}
             </button>}
             <button

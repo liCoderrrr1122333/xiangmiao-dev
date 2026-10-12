@@ -11,7 +11,7 @@ test('automation composer probing never waits on the session endpoint', async ()
   assert.match(source, /const controller = new AbortController\(\)/);
   assert.match(source, /signal: controller\.signal/);
   assert.match(source, /window\.setTimeout\(\(\) => controller\.abort\(\), sessionProbeTimeoutMs\)/);
-  assert.match(source, /__yaochuangSessionProbe/);
+  assert.match(source, /__xiangmaoSessionProbe/);
   assert.match(source, /cached\?\.error \|\| cached\?\.unauthenticated/);
 });
 

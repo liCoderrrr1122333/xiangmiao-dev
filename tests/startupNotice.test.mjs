@@ -35,7 +35,7 @@ test('startup notice implementation keeps one mandatory accessible action', asyn
   assert.match(settingsStore, /acknowledgedNoticeVersion: 0/);
   assert.match(component, /role="dialog"/);
   assert.match(component, /aria-modal="true"/);
-  assert.match(component, /我已确认，进入耀创工坊/);
+  assert.match(component, /我已确认，进入像锚/);
   assert.match(component, /event\.key === 'Escape'/);
   assert.match(component, /event\.stopImmediatePropagation\(\)/);
   assert.doesNotMatch(component, /以后再说|跳过|modal-close|关闭公告/);

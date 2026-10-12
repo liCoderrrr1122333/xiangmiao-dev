@@ -6,7 +6,7 @@ import { _electron as electron } from 'playwright-core';
 
 // UI-only fault injection; browser mutations are covered by the production-function fixtures.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const artifacts = path.resolve('D:/Yaochuang-Workshop/TestArtifacts/1.2.4-manual-verification');
+const artifacts = path.resolve('D:/Xiangmao-Workshop/TestArtifacts/1.2.4-manual-verification');
 const userData = path.join(artifacts, `ui-profile-${Date.now()}`);
 await mkdir(userData, { recursive: true });
 await writeFile(path.join(userData, 'settings.json'), JSON.stringify({
@@ -14,7 +14,7 @@ await writeFile(path.join(userData, 'settings.json'), JSON.stringify({
 }));
 const app = await electron.launch({
   executablePath: path.join(root, 'node_modules/electron/dist/electron.exe'),
-  args: [root], cwd: root, env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userData }
+  args: [root], cwd: root, env: { ...process.env, XIANGMAO_USER_DATA_DIR: userData }
 });
 try {
   const page = await app.firstWindow();
@@ -22,7 +22,7 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.locator('#root').waitFor();
-  const notice = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const notice = page.getByRole('button', { name: '我已确认，进入像锚' });
   await notice.waitFor({ timeout: 15000 });
   await notice.click();
   await app.evaluate(({ ipcMain }) => {

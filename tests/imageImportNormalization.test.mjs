@@ -36,7 +36,7 @@ test('all image entry points use the trusted normalization IPC and expose HEIC/H
   assert.match(preload, /image:normalize-import/);
   assert.match(main, /registerTrustedIpcHandler\(\s*'image:normalize-import'/);
   assert.match(main, /normalizeImportedImage/);
-  assert.match(imageUtils, /window\.masklock\?\.normalizeImageImport/);
+  assert.match(imageUtils, /window\.xiangmao\?\.normalizeImageImport/);
   assert.match(imageUtils, /isPotentialImageImport/);
   assert.doesNotMatch(faces, /file\.type\.startsWith\('image\/'\)/);
   assert.doesNotMatch(wardrobe, /file\.type\.startsWith\('image\/'\)/);

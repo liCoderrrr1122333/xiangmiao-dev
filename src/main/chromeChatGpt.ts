@@ -90,9 +90,9 @@ interface ChromeProtocolClient {
   close: () => Promise<void>;
 }
 
-const managedPortFileName = 'YaochuangDevToolsPort';
-const managedModeFileName = 'YaochuangChromeMode';
-const managedPidFileName = 'YaochuangChromePid';
+const managedPortFileName = 'XiangmaoDevToolsPort';
+const managedModeFileName = 'XiangmaoChromeMode';
+const managedPidFileName = 'XiangmaoChromePid';
 const chromeDevToolsActivePortFileName = 'DevToolsActivePort';
 const profileLockFileNames = ['SingletonLock', 'SingletonCookie', 'SingletonSocket'];
 const chromeStartupAttemptsPerBrowser = 2;
@@ -100,7 +100,7 @@ const chromeFixedPortStartupTimeoutMs = 15000;
 const chromePipeStartupTimeoutMs = 30000;
 
 export class ChromeChatGptStartupError extends Error {
-  readonly code = 'YAOCHUANG_CHROME_STARTUP_FAILED';
+  readonly code = 'XIANGMAO_CHROME_STARTUP_FAILED';
 
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
@@ -983,7 +983,7 @@ async function findPageTarget(port: number, targetUrl: string) {
 
 function assertProfileDirectoryWritable(profileDir: string) {
   fsSync.mkdirSync(profileDir, { recursive: true });
-  const probePath = path.join(profileDir, `.yaochuang-write-probe-${process.pid}-${Date.now()}`);
+  const probePath = path.join(profileDir, `.xiangmao-write-probe-${process.pid}-${Date.now()}`);
   try {
     fsSync.writeFileSync(probePath, 'ok', 'utf8');
   } finally {

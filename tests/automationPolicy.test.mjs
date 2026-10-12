@@ -119,7 +119,7 @@ test('upload errors never count as success', () => {
 });
 
 test('Windows project names cannot escape the desktop folder', () => {
-  assert.equal(sanitizeWindowsFileName('..'), '耀创工坊项目');
+  assert.equal(sanitizeWindowsFileName('..'), '像锚项目');
   assert.equal(sanitizeWindowsFileName('CON'), '_CON');
   assert.equal(sanitizeWindowsFileName('项目:一.'), '项目_一');
   assert.throws(() => resolveContainedChild('C:\\Users\\hale\\Desktop', '..'));
@@ -169,8 +169,8 @@ test('automation source keeps the result-integrity safeguards enabled', async ()
   const source = await readFile(new URL('../src/main/index.ts', import.meta.url), 'utf8');
   const persistence = await readFile(new URL('../src/main/imagePersistence.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /earlyCandidateKeys/);
-  assert.match(source, /data-yaochuang-upload-target/);
-  assert.match(source, /data-yaochuang-before-send-image/);
+  assert.match(source, /data-xiangmao-upload-target/);
+  assert.match(source, /data-xiangmao-before-send-image/);
   assert.match(source, /isPreexistingNode/);
   assert.match(source, /isInNewResponse/);
   assert.match(source, /preexisting-node/);

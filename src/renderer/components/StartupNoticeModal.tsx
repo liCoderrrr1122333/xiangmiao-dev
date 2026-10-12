@@ -96,7 +96,7 @@ export function StartupNoticeModal({ onConfirm }: StartupNoticeModalProps) {
                   <h2>ChatGPT 网页做图</h2>
                   <span className="startup-notice-recommendation">可选</span>
                 </div>
-                <p>只有选择 ChatGPT 网页路线时，才需要准备可访问网页的网络并登录耀创工坊专属 Chrome。Gemini 当前暂不建议用于正式流程。</p>
+                <p>只有选择 ChatGPT 网页路线时，才需要准备可访问网页的网络并登录像锚专属 Chrome。Gemini 当前暂不建议用于正式流程。</p>
               </div>
             </section>
           </div>
@@ -116,7 +116,7 @@ export function StartupNoticeModal({ onConfirm }: StartupNoticeModalProps) {
             onClick={confirmNotice}
           >
             {saving && <LoaderCircle className="startup-notice-spinner" aria-hidden="true" />}
-            <span>{saving ? '正在保存...' : '我已确认，进入耀创工坊'}</span>
+            <span>{saving ? '正在保存...' : '我已确认，进入像锚'}</span>
           </button>
         </footer>
       </section>

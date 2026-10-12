@@ -9,8 +9,8 @@ import {
 } from '../dist-electron/main/imagePersistence.js';
 import { recoverLegacyPostProcessingResults } from '../dist-electron/main/legacyPostProcessingRecovery.js';
 
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-result-persistence');
-const allowedRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-result-persistence');
+const allowedRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts');
 if (!artifactRoot.startsWith(`${allowedRoot}${path.sep}`)) throw new Error('Result test root escaped the approved D: artifact directory.');
 
 function asymmetricPngDataUrl(width, height) {

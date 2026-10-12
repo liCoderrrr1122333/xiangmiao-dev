@@ -107,7 +107,7 @@ export async function createCameraRealismFolderOutputDirectory(
   now = new Date()
 ) {
   const realSourceDir = await fs.realpath(sourceDir);
-  const baseName = `耀创工坊_降AI感_${timestampLabel(now)}`;
+  const baseName = `像锚_降AI感_${timestampLabel(now)}`;
   for (let copy = 1; copy <= 9999; copy += 1) {
     const outputDir = path.join(realSourceDir, copy === 1 ? baseName : `${baseName}_${copy}`);
     try {

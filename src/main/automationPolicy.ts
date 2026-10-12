@@ -167,7 +167,7 @@ export function shouldRejectSettledStructuredResponse(evidence: {
   );
 }
 
-export function sanitizeWindowsFileName(name: string, fallback = '耀创工坊项目') {
+export function sanitizeWindowsFileName(name: string, fallback = '像锚项目') {
   const withoutControlChars = [...name].map((char) => (char.charCodeAt(0) < 32 ? '_' : char)).join('');
   let safe = withoutControlChars
     .replace(/[<>:"/\\|?*]/g, '_')

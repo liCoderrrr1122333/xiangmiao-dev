@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const artifactRoot = process.env.YAOCHUANG_TEST_ARTIFACTS || 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-web-pose-ui';
+const artifactRoot = process.env.XIANGMAO_TEST_ARTIFACTS || 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-web-pose-ui';
 const userDataDir = path.join(artifactRoot, 'AppData');
-const sourceImagePath = path.join(repoRoot, 'public', 'yaochuang-unified-v2.png');
-const executablePath = process.env.YAOCHUANG_TEST_EXE?.trim();
+const sourceImagePath = path.join(repoRoot, 'public', 'xiangmao-unified-v2.png');
+const executablePath = process.env.XIANGMAO_TEST_EXE?.trim();
 
 await fs.mkdir(artifactRoot, { recursive: true });
 await fs.rm(userDataDir, { recursive: true, force: true });
@@ -70,8 +70,8 @@ let app;
 try {
   app = await electron.launch(
     executablePath
-      ? { executablePath, env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userDataDir } }
-      : { args: ['.'], cwd: repoRoot, env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userDataDir } }
+      ? { executablePath, env: { ...process.env, XIANGMAO_USER_DATA_DIR: userDataDir } }
+      : { args: ['.'], cwd: repoRoot, env: { ...process.env, XIANGMAO_USER_DATA_DIR: userDataDir } }
   );
   const appVersion = await app.evaluate(({ app: electronApp }) => electronApp.getVersion());
   assert.equal(appVersion, '1.2.4', 'Electron runtime must report version 1.2.4');
@@ -82,13 +82,13 @@ try {
   });
 
   await page.evaluate(async (value) => {
-    const settings = await window.masklock.readSettings();
-    await window.masklock.writeSettings({
+    const settings = await window.xiangmao.readSettings();
+    await window.xiangmao.writeSettings({
       ...settings,
       generationProvider: 'chatgpt',
       apiProvider: 'chatgpt'
     });
-    await window.masklock.writeRecentAutoSave(value);
+    await window.xiangmao.writeRecentAutoSave(value);
   }, project);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('.project-name')?.value === '网感姿势视觉验收');
@@ -98,7 +98,7 @@ try {
     await startupNotice.waitFor({ state: 'hidden' });
   }
 
-  assert.equal(await page.getByText('耀创工坊', { exact: true }).count(), 1, '打包应用必须保留唯一产品名称');
+  assert.equal(await page.getByText('像锚', { exact: true }).count(), 1, '打包应用必须保留唯一产品名称');
   assert.equal(
     await page.getByText('Image 2.0 区域锁定工作台', { exact: true }).count(),
     0,

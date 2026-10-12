@@ -24,20 +24,20 @@ import { canSafelyRetryGeminiSend } from '../dist-electron/main/geminiAutomation
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempRoot = path.join(repoDir, '.tmp');
-const suppliedProfileDir = process.env.YAOCHUANG_GEMINI_PROFILE_DIR?.trim();
+const suppliedProfileDir = process.env.XIANGMAO_GEMINI_PROFILE_DIR?.trim();
 const profileDir = suppliedProfileDir
   ? path.resolve(suppliedProfileDir)
   : path.join(tempRoot, `gemini-live-surface-${process.pid}`);
 const ownsProfile = !suppliedProfileDir;
-const exerciseModelSelection = process.env.YAOCHUANG_TEST_GEMINI_MODEL_SELECTION === '1';
-const liveFlow = process.env.YAOCHUANG_TEST_GEMINI_FLOW?.trim().toLowerCase();
+const exerciseModelSelection = process.env.XIANGMAO_TEST_GEMINI_MODEL_SELECTION === '1';
+const liveFlow = process.env.XIANGMAO_TEST_GEMINI_FLOW?.trim().toLowerCase();
 if (liveFlow && !['analysis', 'generation'].includes(liveFlow)) {
   throw new Error(`Unsupported Gemini live flow: ${liveFlow}`);
 }
-const exerciseAttachmentUpload = process.env.YAOCHUANG_TEST_GEMINI_UPLOAD === '1' || Boolean(liveFlow);
+const exerciseAttachmentUpload = process.env.XIANGMAO_TEST_GEMINI_UPLOAD === '1' || Boolean(liveFlow);
 const liveUploadPath = path.join(tempRoot, `gemini-live-upload-${process.pid}.jpg`);
-const flowAttachmentPath = path.join(repoDir, 'dist', 'yaochuang-unified-v2.png');
-const flowArtifactRoot = 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-gemini-live';
+const flowAttachmentPath = path.join(repoDir, 'dist', 'xiangmao-unified-v2.png');
+const flowArtifactRoot = 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-gemini-live';
 if (ownsProfile && !profileDir.startsWith(`${tempRoot}${path.sep}`)) throw new Error(`Unsafe live profile: ${profileDir}`);
 fs.mkdirSync(tempRoot, { recursive: true });
 if (ownsProfile) fs.rmSync(profileDir, { recursive: true, force: true });
@@ -148,8 +148,8 @@ try {
     }
     const upload = await uploadAndConfirmGeminiAttachments(window.webContents, [flowAttachmentPath], 45_000);
     const prompt = liveFlow === 'analysis'
-      ? '观察附件中的耀创工坊图标。只返回一个 JSON 对象，不要 Markdown，不要解释。字段必须完整：{"sceneDescription":"画面内容","poseDescription":"主体姿态","faceDirectionDescription":"主体朝向","lightingMakeupDescription":"光影和色彩","negativePrompt":"不需要出现的内容"}'
-      : '请直接生成一张新图片。根据附件中的耀创工坊图标，生成一张全新的 1:1 极简专业桌面创作工具图标。主体清晰，使用冷中性色背景。请依据附件完成图片生成或编辑，并在当前回复中返回最终图片；不要只提供文字说明。';
+      ? '观察附件中的像锚图标。只返回一个 JSON 对象，不要 Markdown，不要解释。字段必须完整：{"sceneDescription":"画面内容","poseDescription":"主体姿态","faceDirectionDescription":"主体朝向","lightingMakeupDescription":"光影和色彩","negativePrompt":"不需要出现的内容"}'
+      : '请直接生成一张新图片。根据附件中的像锚图标，生成一张全新的 1:1 极简专业桌面创作工具图标。主体清晰，使用冷中性色背景。请依据附件完成图片生成或编辑，并在当前回复中返回最终图片；不要只提供文字说明。';
     assert.equal(await setGeminiPrompt(window.webContents, prompt), true, 'Gemini live prompt was not written.');
     const ready = await waitForGeminiComposerReady(window.webContents, 1, 60_000);
     assert.equal(ready.ready, true, `Gemini live composer did not pass the final send gate: ${JSON.stringify(ready)}`);
@@ -242,7 +242,7 @@ try {
         return result;
       })()`, true).catch(() => undefined)
     : undefined;
-  if (process.env.YAOCHUANG_REQUIRE_GEMINI_MODELS === '1') {
+  if (process.env.XIANGMAO_REQUIRE_GEMINI_MODELS === '1') {
     assert.equal(modelCatalog?.ok, true, modelCatalog?.message || 'Gemini model catalog was not available.');
   }
   console.log(JSON.stringify({

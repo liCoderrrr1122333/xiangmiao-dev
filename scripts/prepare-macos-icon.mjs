@@ -9,9 +9,9 @@ if (process.platform !== 'darwin') {
 }
 
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const source = path.join(root, 'build', 'yaochuang-mascot-source.png');
+const source = path.join(root, 'build', 'xiangmao-mascot-source.png');
 const output = path.join(root, 'build', 'icon.icns');
-const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'yaochuang-icon-'));
+const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'xiangmao-icon-'));
 const iconset = path.join(temporaryRoot, 'icon.iconset');
 await mkdir(iconset);
 

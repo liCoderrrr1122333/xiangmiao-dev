@@ -33,18 +33,18 @@ test('application, installer, tray, and renderer all use the same maintained ico
   assert.equal(pkg.build.win.icon, 'build/icon.ico');
   assert.deepEqual(pkg.build.extraResources, [
     { from: 'build/icon.ico', to: 'icon.ico' },
-    { from: 'public/yaochuang-tray.png', to: 'yaochuang-tray.png' }
+    { from: 'public/xiangmao-tray.png', to: 'xiangmao-tray.png' }
   ]);
-  assert.match(toolbar, /src="\.\/yaochuang-tray\.png"/);
+  assert.match(toolbar, /src="\.\/xiangmao-tray\.png"/);
 });
 
 test('maintained icon assets preserve transparency and the Windows ICO size ladder', async () => {
-  const master = await readFile(new URL('../build/yaochuang-mascot-source.png', import.meta.url));
-  const renderer = await readFile(new URL('../public/yaochuang-unified-v2.png', import.meta.url));
-  const tray = await readFile(new URL('../public/yaochuang-tray.png', import.meta.url));
+  const master = await readFile(new URL('../build/xiangmao-mascot-source.png', import.meta.url));
+  const renderer = await readFile(new URL('../public/xiangmao-unified-v2.png', import.meta.url));
+  const tray = await readFile(new URL('../public/xiangmao-tray.png', import.meta.url));
   const buildIcon = await readFile(new URL('../build/icon.ico', import.meta.url));
-  const extraIcon = await readFile(new URL('../build/yaochuang-unified-v2.ico', import.meta.url));
-  const rendererIcon = await readFile(new URL('../public/yaochuang.ico', import.meta.url));
+  const extraIcon = await readFile(new URL('../build/xiangmao-unified-v2.ico', import.meta.url));
+  const rendererIcon = await readFile(new URL('../public/xiangmao.ico', import.meta.url));
 
   assert.deepEqual(master, renderer, 'renderer master must match the maintained transparent source');
   assert.equal(master[25], 6, 'master PNG must use RGBA color type');

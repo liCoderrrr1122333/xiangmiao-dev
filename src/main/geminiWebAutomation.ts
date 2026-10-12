@@ -418,10 +418,10 @@ async function markGeminiFileInput(webContents: ChatGptWebContentsLike, marker: 
       }))
       .sort((left, right) => right.score - left.score)[0]?.input;
     if (selected) {
-      selected.setAttribute('data-yaochuang-gemini-upload-target', token);
-      selected.setAttribute('data-yaochuang-gemini-expected-files', String(expectedFiles));
+      selected.setAttribute('data-xiangmao-gemini-upload-target', token);
+      selected.setAttribute('data-xiangmao-gemini-expected-files', String(expectedFiles));
       const recordSelectionEvent = () => {
-        selected.setAttribute('data-yaochuang-gemini-upload-events', String(selected.files?.length || 0));
+        selected.setAttribute('data-xiangmao-gemini-upload-events', String(selected.files?.length || 0));
       };
       selected.addEventListener('input', recordSelectionEvent);
       selected.addEventListener('change', recordSelectionEvent);
@@ -482,7 +482,7 @@ export async function uploadGeminiAttachments(
       baselineAttachmentCount: receipts[0]?.baselineAttachmentCount || 0
     };
   }
-  const marker = `yaochuang-gemini-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const marker = `xiangmao-gemini-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const errors: string[] = [];
   let baselineAttachmentCount = 0;
   const debuggerApi = webContents.debugger;
@@ -505,7 +505,7 @@ export async function uploadGeminiAttachments(
     const { root } = await debuggerApi.sendCommand('DOM.getDocument', { depth: -1, pierce: true }) as { root: { nodeId: number } };
     const { nodeId } = await debuggerApi.sendCommand('DOM.querySelector', {
       nodeId: root.nodeId,
-      selector: `input[data-yaochuang-gemini-upload-target="${marker}"]`
+      selector: `input[data-xiangmao-gemini-upload-target="${marker}"]`
     }) as { nodeId: number };
     if (!nodeId) throw new Error('已经定位 Gemini 上传入口，但 CDP 无法取得对应节点。');
     await debuggerApi.sendCommand('DOM.setFileInputFiles', { nodeId, files });
@@ -513,10 +513,10 @@ export async function uploadGeminiAttachments(
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
     await evaluate<boolean>(webContents, pageScript((token: string) => {
-      const input = document.querySelector(`input[data-yaochuang-gemini-upload-target="${token}"]`);
-      input?.removeAttribute('data-yaochuang-gemini-upload-target');
-      input?.removeAttribute('data-yaochuang-gemini-expected-files');
-      input?.removeAttribute('data-yaochuang-gemini-upload-events');
+      const input = document.querySelector(`input[data-xiangmao-gemini-upload-target="${token}"]`);
+      input?.removeAttribute('data-xiangmao-gemini-upload-target');
+      input?.removeAttribute('data-xiangmao-gemini-expected-files');
+      input?.removeAttribute('data-xiangmao-gemini-upload-events');
       return true;
     }, marker), 1500).catch(() => false);
   } finally {
@@ -557,10 +557,10 @@ export async function waitForGeminiAttachments(
   const cleanupMarker = async () => {
     if (!marker) return;
     await evaluate<boolean>(webContents, pageScript((token: string) => {
-      const input = document.querySelector(`input[data-yaochuang-gemini-upload-target="${token}"]`);
-      input?.removeAttribute('data-yaochuang-gemini-upload-target');
-      input?.removeAttribute('data-yaochuang-gemini-expected-files');
-      input?.removeAttribute('data-yaochuang-gemini-upload-events');
+      const input = document.querySelector(`input[data-xiangmao-gemini-upload-target="${token}"]`);
+      input?.removeAttribute('data-xiangmao-gemini-upload-target');
+      input?.removeAttribute('data-xiangmao-gemini-expected-files');
+      input?.removeAttribute('data-xiangmao-gemini-upload-events');
       return true;
     }, marker), 1500).catch(() => false);
   };
@@ -627,7 +627,7 @@ export async function waitForGeminiAttachments(
           names.some((name) => markerText.includes(name));
       });
       const markedInput = token
-        ? document.querySelector<HTMLInputElement>(`input[data-yaochuang-gemini-upload-target="${token}"]`)
+        ? document.querySelector<HTMLInputElement>(`input[data-xiangmao-gemini-upload-target="${token}"]`)
         : null;
       const nameHits = names.filter((name) => text.includes(name)).length;
       const errorText = [...document.querySelectorAll<HTMLElement>('[role="alert"],[class*="error"]')]
@@ -642,7 +642,7 @@ export async function waitForGeminiAttachments(
         nameHits,
         errorText,
         selectedFileCount: markedInput?.files?.length || 0,
-        inputEventCount: Number(markedInput?.getAttribute('data-yaochuang-gemini-upload-events') || 0),
+        inputEventCount: Number(markedInput?.getAttribute('data-xiangmao-gemini-upload-events') || 0),
         busyCount
       };
     }, expectedNames, marker), 5000).catch(() => last);

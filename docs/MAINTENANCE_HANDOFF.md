@@ -1,4 +1,6 @@
-# 耀创工坊后续维护交接基线
+# 历史维护交接基线
+
+> 当前产品名为“像锚”。本文件保留当时的产品名、安装包路径、验收人称呼和版本记录，作为历史证据；当前 macOS 验收步骤见根目录 `MACOS_VALIDATION.md`。
 
 更新时间：2026-09-19
 
@@ -23,7 +25,7 @@
 - 人工完成验证后主动点击“检查恢复”，以所有相关通道连续稳定的只读检查为准，恢复先单路；关闭提示、后台轮询或重启软件均不会自行解锁。已发送任务仍可只读等待和保存，不重复发送。
 - 新增生产函数/真实浏览器页面夹具和隔离 Electron 状态区验证；红绿证据、完整回归结果、验证边界见 `docs/unreleased-chatgpt-manual-verification-guard.md`。未使用真实账号制造验证，也不承诺消除平台侧安全验证。
 
-## 当前唯一可信基线
+## 2026-09-19 时点的旧版交付基线
 
 - 产品：耀创工坊 Windows Electron 桌面应用。
 - 当前正式源码版本：`1.2.4`；当前最新一键安装包版本：`1.2.4`。
@@ -99,7 +101,7 @@
 
 ## 当前最新维护项
 
-- 2026-09-12 完成 `1.2.4` macOS 源码第一轮适配：移除 Mac 对 Windows 固定 AppData/D 盘导出目录的依赖，补充 macOS Chrome/Edge 发现、专属浏览器最小化与精确进程清理、ICNS 生成、当前架构 DMG 配置及源码/打包后自检脚本。Windows 侧 `typecheck`、全量 `285/285`、平台策略 `9/9`、Electron 壳层、ChatGPT 模型/上传夹具、100 组 API 故障注入与结果持久化均通过；真实 `.app`、DMG、签名、公证和 Gatekeeper 必须在目标 Mac 验证，不能提前声称已发布。交接见 `docs/MACOS_HANDOFF.md`，Mac Codex 提示词见根目录 `MAC_CODEX_PROMPT.md`。
+- 2026-09-12 完成 `1.2.4` macOS 源码第一轮适配：移除 Mac 对 Windows 固定 AppData/D 盘导出目录的依赖，补充 macOS Chrome/Edge 发现、专属浏览器最小化与精确进程清理、ICNS 生成、当前架构 DMG 配置及源码/打包后自检脚本。Windows 侧 `typecheck`、全量 `285/285`、平台策略 `9/9`、Electron 壳层、ChatGPT 模型/上传夹具、100 组 API 故障注入与结果持久化均通过；真实 `.app`、DMG、签名、公证和 Gatekeeper 必须在目标 Mac 验证，不能提前声称已发布。交接见 `docs/MACOS_HANDOFF.md`，现行验收清单见根目录 `MACOS_VALIDATION.md`。
 
 - 2026-09-12 修复 ChatGPT 生成中的白板占位图被提前保存：旧逻辑只看尺寸、解码和字节数，且在生成控件持续 20 秒时可强制视为稳定；同尺寸白色 Canvas 因此可能被保存为 JPG。现在使用现有 sharp 对解码像素做轻量内容就绪检查，要求生成状态结束、非空非近乎纯色，并连续两次确认相同的非占位像素内容；保存前再次检查，并复用最后一次通过校验的快照。
 - 新增 src/main/chatGptImageReadiness.ts 与 tests/chatGptImageReadiness.test.mjs，更新 ChatGPT 结果完整性测试。定向测试 25/25、完整 npm test 280/280、构建/typecheck、Electron 壳层、结果持久化和打包 Windows 兼容性均通过。没有修改 UI、提示词、上传、并行、原图、红圈、参考图、结果归档、断点或用户数据；本次保持 1.2.4，安装器已重新打包并放至桌面，未安装、未提交。详细记录见 docs/unreleased-chatgpt-blank-result-save-hotfix.md。

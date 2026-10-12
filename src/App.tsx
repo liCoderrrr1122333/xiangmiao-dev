@@ -141,7 +141,7 @@ function App() {
   const [completedGenerationCount, setCompletedGenerationCount] = useState(0);
   const [projectHydration, setProjectHydration] = useState<'loading' | 'ready'>('loading');
   const [startupNoticeState, setStartupNoticeState] = useState<'loading' | 'visible' | 'dismissed'>(() =>
-    window.masklock ? 'loading' : 'dismissed'
+    window.xiangmao ? 'loading' : 'dismissed'
   );
   const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'history' | 'archive' | 'revision'>('prompt');
   const [analysisCollapsed, setAnalysisCollapsed] = useState(false);
@@ -268,7 +268,7 @@ function App() {
     const chatGptBatchCount = Math.max(1, Math.min(100, Math.round(nextCount || 1)));
     const nextSettings = { ...settings, chatGptBatchCount };
     setSettings({ chatGptBatchCount });
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   const flash = useCallback((message: string) => {
@@ -293,7 +293,7 @@ function App() {
     const sessionId = cameraRealismFolderSessionId;
     setCameraRealismFolderSessionId(undefined);
     setCameraRealismFolderSourceDir(undefined);
-    if (sessionId) void window.masklock?.closeCameraRealismFolderSession(sessionId);
+    if (sessionId) void window.xiangmao?.closeCameraRealismFolderSession(sessionId);
   }
 
   function closeCameraRealismBatch() {
@@ -317,7 +317,7 @@ function App() {
     if (isApplyingCameraRealism || cameraRealismFolderLoading) return;
     setCameraRealismFolderLoading(true);
     try {
-      const selected = await window.masklock?.chooseCameraRealismFolder();
+      const selected = await window.xiangmao?.chooseCameraRealismFolder();
       if (!selected || selected.canceled) return;
       if (selected.error || !selected.sessionId || !selected.items) {
         throw new Error(selected.error || '没有读取到可处理的图片文件夹。');
@@ -361,7 +361,7 @@ function App() {
       try {
         if (cameraRealismSourceMode === 'folder') {
           if (!cameraRealismFolderSessionId || !('status' in item)) throw new Error('文件夹处理会话已失效。');
-          const result = await window.masklock?.processCameraRealismFolderItem({
+          const result = await window.xiangmao?.processCameraRealismFolderItem({
             sessionId: cameraRealismFolderSessionId,
             itemId: item.id,
             strength
@@ -370,7 +370,7 @@ function App() {
           outputDir = result.outputDir || outputDir;
         } else {
           if (!('image' in item)) throw new Error('结果归档条目无效。');
-          const result = await window.masklock?.applyCameraRealism({
+          const result = await window.xiangmao?.applyCameraRealism({
             projectName: project.projectName,
             image: {
               ...item.image,
@@ -445,10 +445,15 @@ function App() {
           promptText: item.promptText || item.image.promptText
         };
         const detected = await detectFaceNaturalizationMask(image);
-        const result = await window.masklock?.applyFaceNaturalization({
+        const mainImage = project.mainImage;
+        const sourceImage = mainImage?.dataUrl && mainImage.width && mainImage.height && image.width === mainImage.width && image.height === mainImage.height
+          ? { dataUrl: mainImage.dataUrl, width: mainImage.width, height: mainImage.height }
+          : undefined;
+        const result = await window.xiangmao?.applyFaceNaturalization({
           projectName: project.projectName,
           image,
-          mask: detected.raster
+          mask: detected.raster,
+          sourceImage
         });
         if (!result?.ok || !result.image) {
           throw new Error(result?.error || '没有生成面部自然化副本。');
@@ -501,16 +506,16 @@ function App() {
     setIsCheckingChatGptLogin(false);
     setIsRefreshingChatGptModels(false);
     if (provider === 'relay') {
-      void window.masklock?.getRelayApiStatus().then(setRelayApiStatus);
+      void window.xiangmao?.getRelayApiStatus().then(setRelayApiStatus);
     }
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   function updateRelayOriginalUnderstanding(enabled: boolean) {
     if (isGeneratingImage || settings.relayOriginalUnderstandingEnabled === enabled) return;
     const nextSettings = { ...settings, relayOriginalUnderstandingEnabled: enabled };
     setSettings({ relayOriginalUnderstandingEnabled: enabled });
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
     if (project.promptDraft) setPromptDraft(undefined);
     flash(enabled
       ? '已启用原图理解，请重新生成提示词。'
@@ -521,7 +526,7 @@ function App() {
     if (isGeneratingImage || normalizeRelayImageModel(settings.apiModel) === apiModel) return;
     const nextSettings = { ...settings, apiModel };
     setSettings({ apiModel });
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   function updateChatGptModel(model: string) {
@@ -529,14 +534,14 @@ function App() {
     const patch = webAiProvider === 'gemini' ? { geminiModel: model } : { chatGptModel: model };
     const nextSettings = { ...settings, ...patch };
     setSettings(patch);
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   function updateChatGptParallelism(chatGptParallelism: ChatGptParallelism) {
     if (isGeneratingImage) return;
     const nextSettings = { ...settings, chatGptParallelism };
     setSettings({ chatGptParallelism });
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   function updateChatGptWorkMode(chatGptWorkMode: ChatGptWorkMode) {
@@ -544,7 +549,7 @@ function App() {
     const patch = { chatGptWorkMode };
     const nextSettings = { ...settings, ...patch };
     setSettings(patch);
-    void window.masklock?.writeSettings(nextSettings);
+    void window.xiangmao?.writeSettings(nextSettings);
   }
 
   async function refreshChatGptModels(
@@ -568,7 +573,7 @@ function App() {
     setIsRefreshingChatGptModels(true);
     try {
       const result = await withTimeout(
-        Promise.resolve(window.masklock?.listWebAiModels({ provider, url, backend })),
+        Promise.resolve(window.xiangmao?.listWebAiModels({ provider, url, backend })),
         60_000,
         `读取 ${webAiProviderLabel(provider)} 模型超过 60 秒`
       );
@@ -593,12 +598,12 @@ function App() {
 
   async function copyPrompt(text = activePrompt?.promptText) {
     if (!text) return flash('还没有可复制的提示词。');
-    await window.masklock?.copyText(text);
+    await window.xiangmao?.copyText(text);
     flash('提示词已复制到剪贴板。');
   }
 
   async function saveProject() {
-    const result = await window.masklock?.saveProject(project);
+    const result = await window.xiangmao?.saveProject(project);
     if (result && !result.canceled) {
       updateProject({ projectPath: result.filePath });
       flash('项目已保存。');
@@ -607,7 +612,7 @@ function App() {
 
   async function importProject() {
     try {
-      const result = await window.masklock?.importProject();
+      const result = await window.xiangmao?.importProject();
       if (result && !result.canceled && result.project) {
         setProject({ ...result.project, projectPath: result.filePath });
         flash('项目已导入。');
@@ -629,7 +634,7 @@ function App() {
     const runCheck = () =>
       withTimeout(
         Promise.resolve(
-          window.masklock?.checkWebAiLogin({ provider, url, backend, reconcileProtection })
+          window.xiangmao?.checkWebAiLogin({ provider, url, backend, reconcileProtection })
         ),
         chatGptLoginCheckTimeoutMs,
         `${webAiProviderLabel(provider)} 登录检查超过 ${Math.round(chatGptLoginCheckTimeoutMs / 1000)} 秒`
@@ -682,7 +687,7 @@ function App() {
               needsLogin: false,
               usable: false,
               backend,
-              message: '正在启动或恢复耀创工坊专属 Chrome，请稍候...'
+              message: '正在启动或恢复像锚专属 Chrome，请稍候...'
             }
       );
     }, 8_000);
@@ -734,8 +739,8 @@ function App() {
       });
       try {
         const action = forceRecovery
-          ? window.masklock?.recoverWebAiWindow
-          : window.masklock?.showWebAiWindow;
+          ? window.xiangmao?.recoverWebAiWindow
+          : window.xiangmao?.showWebAiWindow;
         const result = await withTimeout(
           Promise.resolve(
             action?.({
@@ -745,7 +750,7 @@ function App() {
             })
           ),
           chatGptWindowOpenTimeoutMs,
-          '打开耀创工坊专属 Chrome 超时'
+          '打开像锚专属 Chrome 超时'
         );
         if (sequence !== chatGptLoginSequenceRef.current) return;
         if (result?.backend && result.backend !== settings.chatGptBrowserBackend) {
@@ -796,7 +801,7 @@ function App() {
   }
 
   async function checkChatGptProtectionRecovery() {
-    const result = await window.masklock?.checkChatGptProtectionRecovery({
+    const result = await window.xiangmao?.checkChatGptProtectionRecovery({
       url: activeProviderUrl,
       backend: settings.chatGptBrowserBackend
     });
@@ -815,7 +820,7 @@ function App() {
   async function pauseChatGptBatch() {
     if (!isGeneratingImage || isPauseRequested) return;
     setIsPauseRequested(true);
-    const result = await window.masklock?.pauseChatGptBatch();
+    const result = await window.xiangmao?.pauseChatGptBatch();
     if (!result?.ok) {
       setIsPauseRequested(false);
       flash(result?.message || '当前批量任务暂时无法暂停。');
@@ -838,7 +843,7 @@ function App() {
       return;
     }
     if (generationProvider === 'relay') {
-      const status = await window.masklock?.getRelayApiStatus();
+      const status = await window.xiangmao?.getRelayApiStatus();
       if (status) setRelayApiStatus(status);
       if (!status?.configured || !status.protocolReady) {
         setRelayConfigOpen(true);
@@ -876,13 +881,13 @@ function App() {
             faceOcclusionApplied ? project.faceOcclusionMask : undefined
           );
       const operationGuide = buildOperationGuide(projectAtSend, activeProviderLabel);
-      await window.masklock?.writeRecentAutoSave(projectAtSend);
+      await window.xiangmao?.writeRecentAutoSave(projectAtSend);
       setAutomationStatus(
         settings.chatGptAutomationMode === 'manual'
           ? null
           : { step: `正在准备 ${activeProviderLabel} 后台自动化`, detail: '正在导出素材包并启动后台自动窗口。' }
       );
-      const result = await window.masklock?.createSendPackage(
+      const result = await window.xiangmao?.createSendPackage(
         {
           project: projectAtSend, prompt: promptSnapshot,
           redCircleDataUrl,
@@ -966,7 +971,7 @@ function App() {
       format === 'md'
         ? `# ${activePrompt.title}\n\n> 仅编辑提示词明确授权的区域，其他内容保持原图不变。\n\n${activePrompt.promptText}\n\n## Negative Prompt\n\n${activePrompt.negativePrompt}\n`
         : activePrompt.promptText;
-    await window.masklock?.exportTextFile({ defaultName: `${project.projectName}_prompt.${format}`, content });
+    await window.xiangmao?.exportTextFile({ defaultName: `${project.projectName}_prompt.${format}`, content });
     flash('提示词已导出。');
   }
 
@@ -979,14 +984,14 @@ function App() {
           project.maskCircle,
           project.faceOcclusionEnabled ? project.faceOcclusionMask : undefined
         );
-    await window.masklock?.exportRedCircleImage({ projectName: project.projectName, dataUrl });
+    await window.xiangmao?.exportRedCircleImage({ projectName: project.projectName, dataUrl });
     flash('带红圈主图已导出。');
   }
 
   async function apiGenerate() {
     if (!activePrompt?.promptText.trim()) return flash('请先生成或填写提示词。');
     if (!settings.apiModeEnabled) return flash('请先在设置中启用 API 直接生成。');
-    const result = await window.masklock?.apiGenerate({
+    const result = await window.xiangmao?.apiGenerate({
       prompt: activePrompt.promptText,
       apiKey: settings.apiKeySessionOnly,
       model: settings.apiModel,
@@ -1014,7 +1019,7 @@ function App() {
   }
 
   async function acknowledgeStartupNotice() {
-    const bridge = window.masklock;
+    const bridge = window.xiangmao;
     if (!bridge) throw new Error('设置服务不可用。');
     const currentSettings = useSettingsStore.getState().settings;
     const nextSettings = {
@@ -1029,7 +1034,7 @@ function App() {
   }
 
   useEffect(() => {
-    const bridge = window.masklock;
+    const bridge = window.xiangmao;
     if (!bridge) {
       setStartupNoticeState('dismissed');
     } else {
@@ -1068,11 +1073,11 @@ function App() {
     }
     void (async () => {
       try {
-        const saved = await window.masklock?.readRecentAutoSave();
+        const saved = await window.xiangmao?.readRecentAutoSave();
         if (saved?.project?.projectName) setProject(saved.project);
         if (saved?.status === 'recovered-backup') flash(saved.message || '自动保存已从备份恢复。');
         if (saved?.status === 'corrupt') flash(saved.message || '自动保存损坏，已保留问题文件并建立新项目。');
-        const legacyRecovery = await window.masklock?.recoverLegacyPostProcessingResults();
+        const legacyRecovery = await window.xiangmao?.recoverLegacyPostProcessingResults();
         if (legacyRecovery?.found) {
           for (const image of legacyRecovery.recoveredImages) addResult(image);
           setLegacyResultRecovery(legacyRecovery);
@@ -1099,7 +1104,7 @@ function App() {
     startupProviderInitializationStartedRef.current = true;
     if (nextSettings.apiProvider === 'ollama') {
       window.setTimeout(() => {
-        window.masklock?.apiWarmVisionModel({
+        window.xiangmao?.apiWarmVisionModel({
           provider: 'ollama',
           baseUrl: nextSettings.apiBaseUrl,
           model: nextSettings.apiVisionModel
@@ -1112,7 +1117,7 @@ function App() {
 
   useEffect(() => {
     if (!settings.autoSave || projectHydration !== 'ready') return;
-    const id = window.setTimeout(() => window.masklock?.writeRecentAutoSave(project), 600);
+    const id = window.setTimeout(() => window.xiangmao?.writeRecentAutoSave(project), 600);
     return () => window.clearTimeout(id);
   }, [project, projectHydration, settings.autoSave]);
 
@@ -1134,11 +1139,11 @@ function App() {
   }, [settings.theme, settings.fontSize, settings.motionMode]);
 
   useEffect(() => {
-    return window.masklock?.onChatGptAutomationStatus(setAutomationStatus);
+    return window.xiangmao?.onChatGptAutomationStatus(setAutomationStatus);
   }, []);
 
   useEffect(() => {
-    return window.masklock?.onChatGptAutomationLifecycle((lifecycle) => {
+    return window.xiangmao?.onChatGptAutomationLifecycle((lifecycle) => {
       if (!isNewerAutomationLifecycleSequence(automationLifecycleSequenceRef.current, lifecycle.sequence)) return;
       automationLifecycleSequenceRef.current = lifecycle.sequence;
       setIsGeneratingImage(lifecycle.running);
@@ -1154,7 +1159,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    return window.masklock?.onChatGptBrowserBackendChanged((backend: ChatGptBrowserBackend) => {
+    return window.xiangmao?.onChatGptBrowserBackendChanged((backend: ChatGptBrowserBackend) => {
       chatGptLoginSequenceRef.current += 1;
       setSettings({ chatGptBrowserBackend: backend });
       setChatGptLoginStatus((current) =>
@@ -1164,7 +1169,7 @@ function App() {
               backend,
               message:
                 backend === 'chrome'
-                  ? `${activeProviderLabel} 登录已切换到耀创工坊专属 Chrome，请在该窗口完成登录。`
+                  ? `${activeProviderLabel} 登录已切换到像锚专属 Chrome，请在该窗口完成登录。`
                   : current.message
             }
           : current
@@ -1173,7 +1178,7 @@ function App() {
   }, [activeProviderLabel, setSettings]);
 
   useEffect(() => {
-    return window.masklock?.onChatGptLoginStatusChanged((status) => {
+    return window.xiangmao?.onChatGptLoginStatusChanged((status) => {
       const statusProvider = normalizeWebAiProvider(status.provider);
       if (statusProvider !== webAiProvider) return;
       chatGptLoginSequenceRef.current += 1;
@@ -1190,7 +1195,7 @@ function App() {
   );
 
   useEffect(() => {
-    return window.masklock?.onChatGptAutomationResult(({ image, completedCount, requestedCount, taskIndex, laneId }) => {
+    return window.xiangmao?.onChatGptAutomationResult(({ image, completedCount, requestedCount, taskIndex, laneId }) => {
       addResult(image);
       setCompletedGenerationCount(completedCount);
       setActiveRightTab('archive');
@@ -1265,13 +1270,13 @@ function App() {
       />
 
       <div className="window-controls" aria-label="窗口控制">
-        <button onClick={() => window.masklock?.windowMinimize()} aria-label="最小化">
+        <button onClick={() => window.xiangmao?.windowMinimize()} aria-label="最小化">
           <Minus />
         </button>
-        <button onClick={() => window.masklock?.windowToggleMaximize()} aria-label="最大化或还原">
+        <button onClick={() => window.xiangmao?.windowToggleMaximize()} aria-label="最大化或还原">
           <Square />
         </button>
-        <button className="window-close" onClick={() => window.masklock?.windowClose()} aria-label="关闭">
+        <button className="window-close" onClick={() => window.xiangmao?.windowClose()} aria-label="关闭">
           <X />
         </button>
       </div>
@@ -1644,7 +1649,7 @@ function App() {
               {legacyResultRecovery?.needsAttention && (
                 <div className="legacy-result-recovery" role="status">
                   <span>{legacyResultRecovery.message || '旧版待处理图片已原样保留。'}</span>
-                  <button type="button" onClick={() => window.masklock?.openPath(legacyResultRecovery.sourceDir)}>打开恢复位置</button>
+                  <button type="button" onClick={() => window.xiangmao?.openPath(legacyResultRecovery.sourceDir)}>打开恢复位置</button>
                 </div>
               )}
               <div className="inline-result-grid">

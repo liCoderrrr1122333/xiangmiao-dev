@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
 test('the public typecheck command detects main-process errors, not just renderer errors', async () => {
-  const fixture = await mkdtemp(path.join(os.tmpdir(), 'yaochuang-typecheck-'));
+  const fixture = await mkdtemp(path.join(os.tmpdir(), 'xiangmao-typecheck-'));
   try {
     await writeFile(path.join(fixture, 'package.json'), JSON.stringify({ scripts: { typecheck: pkg.scripts.typecheck } }));
     const config = file => JSON.stringify({ compilerOptions: { noEmit: true, skipLibCheck: true, types: [] }, files: [file] });

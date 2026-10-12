@@ -9,8 +9,8 @@ const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const unpackedRoot = path.join(repoRoot, 'release', 'win-unpacked');
 const resourcesRoot = path.join(unpackedRoot, 'resources');
 const packagedAppRoot = path.join(resourcesRoot, 'app');
-const executablePath = path.join(unpackedRoot, '耀创工坊.exe');
-const artifactRoot = 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-packaged-windows-compatibility';
+const executablePath = path.join(unpackedRoot, '像锚.exe');
+const artifactRoot = 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-packaged-windows-compatibility';
 const userDataDir = path.join(artifactRoot, 'user-data');
 
 assert.equal(existsSync(path.join(resourcesRoot, 'app.asar')), false, 'packaged release must not contain app.asar');
@@ -30,7 +30,7 @@ const electronApp = await electron.launch({
   cwd: unpackedRoot,
   env: {
     ...process.env,
-    YAOCHUANG_USER_DATA_DIR: userDataDir
+    XIANGMAO_USER_DATA_DIR: userDataDir
   }
 });
 
@@ -48,9 +48,9 @@ try {
 
   const page = await electronApp.firstWindow({ timeout: 30_000 });
   await page.waitForSelector('.levitated-workbench', { timeout: 30_000 });
-  assert.equal(await page.title(), '耀创工坊');
+  assert.equal(await page.title(), '像锚');
   const logoSource = await page.locator('.logo-mark').getAttribute('src');
-  assert.match(logoSource || '', /yaochuang-tray\.png/);
+  assert.match(logoSource || '', /xiangmao-tray\.png/);
   const screenshotPath = path.join(artifactRoot, 'packaged-startup.png');
   await page.screenshot({ path: screenshotPath });
 

@@ -11,7 +11,7 @@ import {
 test('dedicated browser startup errors have a stable recovery code', () => {
   const error = new ChromeChatGptStartupError('startup failed');
   assert.equal(error.name, 'ChromeChatGptStartupError');
-  assert.equal(error.code, 'YAOCHUANG_CHROME_STARTUP_FAILED');
+  assert.equal(error.code, 'XIANGMAO_CHROME_STARTUP_FAILED');
 });
 
 test('dedicated Chrome prefers a local pipe and keeps fixed-port startup as fallback', () => {
@@ -45,7 +45,7 @@ test('dedicated browser lifecycle cleans only its exact profile and retries star
   assert.match(source, /\$_.Name -eq 'chrome\.exe' -or \$_.Name -eq 'msedge\.exe'/);
   assert.match(source, /Stop-Process -Id \$processId -Force/);
   assert.match(source, /SingletonLock/);
-  assert.match(source, /YaochuangChromePid/);
+  assert.match(source, /XiangmaoChromePid/);
   assert.match(source, /lock files must stay intact if process ownership is unknown/);
   assert.match(source, /chromeStartupAttemptsPerBrowser = 2/);
   assert.match(source, /for \(const executable of executables\)/);

@@ -36,6 +36,31 @@ test('face-only processing preserves every background pixel and transparency in 
   assert.ok(changed > 0);
 });
 
+test('same-size source texture is copied only inside the face mask', async () => {
+  const width = 48;
+  const height = 36;
+  const flat = Buffer.alloc(width * height * 4, 180);
+  for (let i = 3; i < flat.length; i += 4) flat[i] = 255;
+  const input = await sharp(flat, { raw: { width, height, channels: 4 } }).png().toBuffer();
+  const noisy = Buffer.alloc(width * height * 3);
+  for (let i = 0; i < noisy.length; i += 1) noisy[i] = 120 + ((i * 17) % 40);
+  const source = await sharp(noisy, { raw: { width, height, channels: 3 } }).png().toBuffer();
+  const mask = await sharp({ create: { width: 8, height: 8, channels: 4, background: '#ffffffff' } }).png().toBuffer();
+  const result = await applyFaceNaturalization(input, { data: mask, x: 8, y: 8, width: 16, height: 16, source });
+  const actual = await sharp(result.buffer).ensureAlpha().raw().toBuffer();
+  let changed = 0;
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    const i = (y * width + x) * 4;
+    if (x < 8 || x >= 24 || y < 8 || y >= 24) assert.deepEqual(actual.subarray(i, i + 4), flat.subarray(i, i + 4));
+    else if (actual[i] !== 180 || actual[i + 1] !== 180 || actual[i + 2] !== 180) changed += 1;
+  }
+  assert.ok(changed > 0);
+  const wrongSize = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#111111' } }).png().toBuffer();
+  const ignored = await applyFaceNaturalization(input, { data: mask, x: 8, y: 8, width: 16, height: 16, source: wrongSize });
+  assert.equal(ignored.width, width);
+  assert.equal(ignored.height, height);
+});
+
 test('empty and out-of-image face masks fail instead of saving a fake repaired result', async () => {
   const input = await sharp({ create: { width: 32, height: 32, channels: 4, background: '#abcdef' } }).png().toBuffer();
   const empty = await sharp({ create: { width: 8, height: 8, channels: 4, background: '#00000000' } }).png().toBuffer();

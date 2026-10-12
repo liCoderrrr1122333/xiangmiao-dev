@@ -6,8 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 
 const projectRoot = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/(.:)/, '$1'));
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-stability\\electron-shell');
-const allowedArtifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-stability\\electron-shell');
+const allowedArtifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts');
 if (!artifactRoot.startsWith(`${allowedArtifactRoot}${path.sep}`)) {
   throw new Error('Electron shell test root escaped the approved D: artifact directory.');
 }
@@ -32,7 +32,7 @@ const electronApp = await electron.launch({
   cwd: projectRoot,
   env: {
     ...process.env,
-    YAOCHUANG_USER_DATA_DIR: userDataDir
+    XIANGMAO_USER_DATA_DIR: userDataDir
   }
 });
 
@@ -48,7 +48,7 @@ try {
   page.on('pageerror', (error) => rendererErrors.push(error.message));
   await page.waitForLoadState('domcontentloaded');
   await page.locator('#root').waitFor({ state: 'visible', timeout: 30_000 });
-  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入像锚' });
   const startupNoticeShown = await startupNoticeConfirm.waitFor({ state: 'visible', timeout: 10_000 })
     .then(() => true)
     .catch(() => false);
@@ -58,7 +58,7 @@ try {
   }
 
   const shellState = await page.evaluate(async () => {
-    const bridge = window.masklock;
+    const bridge = window.xiangmao;
     return {
       title: document.title,
       csp: document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute('content') || '',
@@ -76,7 +76,7 @@ try {
     };
   });
 
-  assert.equal(shellState.title, '耀创工坊');
+  assert.equal(shellState.title, '像锚');
   assert.equal(shellState.hasBridge, true, 'sandboxed preload bridge must be available');
   assert.deepEqual(shellState.bridgeMethods, [
     'readSettings',
@@ -90,7 +90,7 @@ try {
   assert.match(shellState.autosaveStatus, /^(empty|loaded|recovered-backup|corrupt)$/);
   assert.match(shellState.csp, /default-src 'self'/);
   assert.match(shellState.csp, /worker-src 'self' blob:/);
-  const normalizedSettings = await page.evaluate(async () => window.masklock?.readSettings());
+  const normalizedSettings = await page.evaluate(async () => window.xiangmao?.readSettings());
   assert.equal(normalizedSettings?.apiProvider, 'chatgpt', 'obsolete analysis sources must normalize to the visible ChatGPT route');
   assert.equal(normalizedSettings?.generationProvider, 'relay', 'fresh users must start on the local-analysis and API route');
 
@@ -110,7 +110,7 @@ try {
   });
   await modelSelect.selectOption('UI fixture model');
   await page.waitForTimeout(150);
-  const selectedModel = await page.evaluate(async () => (await window.masklock?.readSettings())?.chatGptModel);
+  const selectedModel = await page.evaluate(async () => (await window.xiangmao?.readSettings())?.chatGptModel);
   assert.equal(selectedModel, 'UI fixture model', 'model selection must persist through the renderer settings path');
 
   await page.getByRole('button', { name: '极简直传' }).click();
@@ -144,7 +144,7 @@ try {
   await relayDialog.waitFor({ state: 'visible', timeout: 10_000 });
   await relayDialog.getByLabel('API Key').fill('fixture-relay-key-8f2a');
   await relayDialog.getByRole('button', { name: '保存并测试' }).waitFor({ state: 'visible' });
-  await page.evaluate(async () => window.masklock?.configureRelayApiKey({
+  await page.evaluate(async () => window.xiangmao?.configureRelayApiKey({
     apiKey: 'fixture-relay-key-8f2a',
     remember: false,
     config: { baseUrl: 'https://relay.example.test', model: 'gpt-image-2', protocol: 'openai-images', imagePath: '/v1/images/edits', modelsPath: '/v1/models' }
@@ -153,7 +153,7 @@ try {
   await page.getByRole('button', { name: '配置 API', exact: true }).click();
   await relayDialog.locator('.relay-config-status strong').filter({ hasText: '已配置' }).waitFor({ state: 'visible' });
   await expectText(relayDialog.locator('.relay-config-status'), '已配置');
-  const relaySettings = await page.evaluate(async () => window.masklock?.readSettings());
+  const relaySettings = await page.evaluate(async () => window.xiangmao?.readSettings());
   assert.equal('relayApiKey' in relaySettings, false, 'relay key must never enter settings');
   assert.equal('relayKeySessionOnly' in relaySettings, false, 'relay session key must never enter settings');
   const relayConfigScreenshotPath = path.join(artifactRoot, 'relay-provider-config.png');

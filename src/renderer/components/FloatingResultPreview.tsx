@@ -106,7 +106,7 @@ export function FloatingResultPreview({ result }: { result?: ResultArchiveItem }
           </div>
           <div className="result-float-actions">
             {current.filePath && (
-              <button type="button" onClick={() => window.masklock?.openPath(folderFromPath(current.filePath) || current.filePath!)} title="打开文件夹" aria-label="打开文件夹">
+              <button type="button" onClick={() => window.xiangmao?.openPath(folderFromPath(current.filePath) || current.filePath!)} title="打开文件夹" aria-label="打开文件夹">
                 <FolderOpen />
               </button>
             )}

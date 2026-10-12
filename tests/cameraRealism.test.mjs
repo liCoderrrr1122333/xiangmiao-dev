@@ -81,7 +81,7 @@ test('camera realism ports the complete ZIP finish without its fixed batch noise
 
 test('camera realism writes a verified copy to a new JPEG path', async () => {
   const { writeCameraRealismCopy } = await import('../dist-electron/main/cameraRealism.js');
-  const root = await mkdtemp(path.join(tmpdir(), 'yaochuang-camera-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'xiangmao-camera-'));
   const outputPath = path.join(root, 'result_camera.jpg');
   try {
     const result = await writeCameraRealismCopy(createSvg(80, 60, 7), outputPath);
@@ -118,7 +118,7 @@ test('face naturalization only creates a new PNG copy from a supplied face mask'
   assert.deepEqual(first.buffer, second.buffer);
   assert.notDeepEqual(first.buffer, source);
 
-  const root = await mkdtemp(path.join(tmpdir(), 'yaochuang-face-naturalization-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'xiangmao-face-naturalization-'));
   const outputPath = path.join(root, 'result_face.png');
   try {
     const saved = await writeFaceNaturalizationCopy(source, outputPath, { data: mask, x: 0, y: 0, width: 80, height: 60 });

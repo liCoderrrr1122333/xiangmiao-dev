@@ -20,7 +20,7 @@ for (const profileDir of [pipeProfile, fixedProfile, fallbackProfile]) {
 
 fs.mkdirSync(pipeProfile, { recursive: true });
 fs.writeFileSync(path.join(pipeProfile, 'DevToolsActivePort'), '1\n/stale', 'utf8');
-fs.writeFileSync(path.join(pipeProfile, 'YaochuangDevToolsPort'), '1', 'utf8');
+fs.writeFileSync(path.join(pipeProfile, 'XiangmaoDevToolsPort'), '1', 'utf8');
 
 const diagnostics = [];
 let pipeWindow;
@@ -41,12 +41,12 @@ try {
   const pipeChildTwo = await pipeWindow.createTab?.('about:blank');
   if (!pipeChildOne || !pipeChildTwo) throw new Error('Pipe transport did not expose isolated tab creation.');
   childWindows.push(pipeChildOne, pipeChildTwo);
-  await pipeWindow.webContents.executeJavaScript('globalThis.__yaochuangLane = "root"', true);
-  await pipeChildOne.webContents.executeJavaScript('globalThis.__yaochuangLane = "lane-2"', true);
-  await pipeChildTwo.webContents.executeJavaScript('globalThis.__yaochuangLane = "lane-3"', true);
+  await pipeWindow.webContents.executeJavaScript('globalThis.__xiangmaoLane = "root"', true);
+  await pipeChildOne.webContents.executeJavaScript('globalThis.__xiangmaoLane = "lane-2"', true);
+  await pipeChildTwo.webContents.executeJavaScript('globalThis.__xiangmaoLane = "lane-3"', true);
   const pipeTabValues = await Promise.all(
     [pipeWindow, pipeChildOne, pipeChildTwo].map((window) =>
-      window.webContents.executeJavaScript('globalThis.__yaochuangLane', true)
+      window.webContents.executeJavaScript('globalThis.__xiangmaoLane', true)
     )
   );
   pipeChildOne.destroy();
@@ -55,7 +55,7 @@ try {
     pipeChildOne.isDestroyed() &&
     !pipeWindow.isDestroyed() &&
     !pipeChildTwo.isDestroyed() &&
-    (await pipeWindow.webContents.executeJavaScript('globalThis.__yaochuangLane', true)) === 'root';
+    (await pipeWindow.webContents.executeJavaScript('globalThis.__xiangmaoLane', true)) === 'root';
   pipeWindow.show();
   pipeWindow.focus();
   const shownConfirmed = await pipeWindow.waitForVisibility();
@@ -75,7 +75,7 @@ try {
   const fixedChild = await fixedWindow.createTab?.('about:blank');
   if (!fixedChild) throw new Error('Fixed-port transport did not expose isolated tab creation.');
   childWindows.push(fixedChild);
-  await fixedChild.webContents.executeJavaScript('globalThis.__yaochuangLane = "fixed-child"', true);
+  await fixedChild.webContents.executeJavaScript('globalThis.__xiangmaoLane = "fixed-child"', true);
   fixedChild.destroy();
   await wait(350);
   const fixedChildCloseKeepsRoot =

@@ -1,5 +1,5 @@
 {
-  "name": "yaochuang-result-persistence-harness",
+  "name": "xiangmao-result-persistence-harness",
   "private": true,
   "type": "module",
   "main": "main.mjs"

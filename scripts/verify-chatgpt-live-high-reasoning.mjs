@@ -8,12 +8,12 @@ import { ensureChatGptHighReasoning } from '../dist-electron/main/chatGptReasoni
 import { chatGptModelDomPolicy } from '../dist-electron/shared/chatGptModelPolicy.js';
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const profileDir = path.resolve(process.env.YAOCHUANG_LIVE_CHROME_PROFILE || 'D:\\Yaochuang-Workshop\\AppData\\ChatGPT-Chrome');
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-chatgpt-high-reasoning');
+const profileDir = path.resolve(process.env.XIANGMAO_LIVE_CHROME_PROFILE || 'D:\\Xiangmao-Workshop\\AppData\\ChatGPT-Chrome');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-chatgpt-high-reasoning');
 const targetUrl = 'https://chatgpt.com/';
-const requestedTarget = process.env.YAOCHUANG_LIVE_REASONING_TARGET?.trim() || '';
-const expectedBefore = process.env.YAOCHUANG_LIVE_REASONING_EXPECTED_BEFORE?.trim() || '';
-const presetExtreme = process.env.YAOCHUANG_LIVE_REASONING_PRESET_EXTREME === '1';
+const requestedTarget = process.env.XIANGMAO_LIVE_REASONING_TARGET?.trim() || '';
+const expectedBefore = process.env.XIANGMAO_LIVE_REASONING_EXPECTED_BEFORE?.trim() || '';
+const presetExtreme = process.env.XIANGMAO_LIVE_REASONING_PRESET_EXTREME === '1';
 
 const compiledMain = fs.readFileSync(path.join(repoDir, 'dist-electron', 'main', 'index.js'), 'utf8');
 const functionStart = compiledMain.indexOf('function chatGptModelMenuScript');

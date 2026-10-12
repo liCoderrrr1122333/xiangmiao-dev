@@ -31,6 +31,6 @@ test('explicit ChatGPT login checks have bounded navigation, storage and rendere
   assert.match(appSource, /!result\.protectionPaused/);
   assert.match(appSource, /onChatGptLoginStatusChanged/);
   assert.match(appSource, /chatGptLoginCheckTimeoutMs = 100_000/);
-  assert.match(appSource, /正在启动或恢复耀创工坊专属 Chrome/);
+  assert.match(appSource, /正在启动或恢复像锚专属 Chrome/);
   assert.match(appSource, /Web providers initialize on explicit use/);
 });

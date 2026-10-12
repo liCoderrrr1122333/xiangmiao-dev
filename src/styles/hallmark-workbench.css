@@ -1,11 +1,3 @@
-/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
-/* Hallmark · macrostructure: Workbench · three-column production console
- * theme: custom · vibe: "dark precise restrained professional" · paper: oklch(13% 0.014 285) · accent: oklch(55% 0.18 295)
- * display: Segoe UI Variable Display · body: Segoe UI Variable Text · axes: dark / system-native / cool
- * studied: no · context: explicit · v0.8.0 · contrast: pass (40–41) · icons: pass (30)
- * chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · mobile: desktop-app-n/a
- */
-
 html,
 body {
   overflow-x: clip;
@@ -625,7 +617,6 @@ body {
   }
 }
 
-/* Hallmark adaptive-layout pre-emit score: hierarchy 2, composition 2, restraint 2, states 2, motion 2, accessibility 2, performance 2 = 14/14. */
 .levitated-workbench .main-canvas-panel .canvas-wrap {
   display: flex;
   min-height: clamp(360px, 55dvh, 900px);

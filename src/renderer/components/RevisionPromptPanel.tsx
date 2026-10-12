@@ -42,7 +42,7 @@ export function RevisionPromptPanel({ onCopy }: { onCopy: (text?: string) => voi
         <button onClick={() => onCopy(prompt)}>
           <Copy /> 一键复制
         </button>
-        {providerUrl && <button onClick={() => window.masklock?.openExternal(providerUrl)}>
+        {providerUrl && <button onClick={() => window.xiangmao?.openExternal(providerUrl)}>
           <ExternalLink /> 继续打开 {providerLabel}
         </button>}
         <button onClick={() => setIssues(['红圈外内容被改动'])}>

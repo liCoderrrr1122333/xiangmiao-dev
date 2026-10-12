@@ -72,7 +72,7 @@ export function PromptOutputPanel({
     updateProject({ outputMode: 'custom' });
     setPromptDraft(
       updatePromptDraftText(
-        { ...prompt, outputMode: 'custom', title: '耀创工坊 自定义提示词', usedForSend: false },
+        { ...prompt, outputMode: 'custom', title: '像锚 自定义提示词', usedForSend: false },
         adjustmentText
       )
     );

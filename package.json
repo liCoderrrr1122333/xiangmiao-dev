@@ -1,11 +1,11 @@
 {
-  "name": "yaochuang-workshop",
+  "name": "xiangmao-workshop",
   "private": true,
   "version": "1.2.4",
-  "description": "耀创工坊 - red-circle locked AI image workflow for ChatGPT and Gemini.",
+  "description": "像锚 - 授权人像区域编辑与 AI 图片工作流",
   "type": "module",
   "main": "dist-electron/main/index.js",
-  "author": "hale & hael",
+  "author": "李佳康",
   "engines": { "node": ">=24.14.0" },
   "scripts": {
     "dev": "npm run build && node scripts/dev.mjs",
@@ -67,10 +67,10 @@
     "zustand": "^5.0.14"
   },
   "build": {
-    "appId": "studio.yaochuang.workshop",
+    "appId": "studio.xiangmao.workshop",
     "asar": false,
     "icon": "build/icon.ico",
-    "productName": "耀创工坊",
+    "productName": "像锚",
     "directories": {
       "output": "release"
     },
@@ -85,8 +85,8 @@
         "to": "icon.ico"
       },
       {
-        "from": "public/yaochuang-tray.png",
-        "to": "yaochuang-tray.png"
+        "from": "public/xiangmao-tray.png",
+        "to": "xiangmao-tray.png"
       }
     ],
     "win": {
@@ -94,7 +94,7 @@
       "target": [
         "nsis"
       ],
-      "artifactName": "Yaochuang-Workshop-${version}-Setup.${ext}"
+      "artifactName": "Xiangmao-Workshop-${version}-Setup.${ext}"
     },
     "nsis": {
       "guid": "e162eeba-303c-5fe2-92ee-e44a002caae8",
@@ -102,14 +102,14 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "耀创工坊",
+      "shortcutName": "像锚",
       "deleteAppDataOnUninstall": false,
       "include": "build/installer.nsh"
     },
     "mac": {
       "icon": "build/icon.icns",
       "target": "dmg",
-      "artifactName": "Yaochuang-Workshop-${version}-${arch}.${ext}",
+      "artifactName": "Xiangmao-Workshop-${version}-${arch}.${ext}",
       "category": "public.app-category.graphics-design"
     },
     "dmg": {

@@ -6,17 +6,17 @@ import { fileURLToPath } from 'node:url';
 import { createChromeChatGptWindow } from '../dist-electron/main/chromeChatGpt.js';
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const profileDir = path.resolve(process.env.YAOCHUANG_LIVE_CHROME_PROFILE_CLONE || '');
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-chatgpt-live-attachments');
+const profileDir = path.resolve(process.env.XIANGMAO_LIVE_CHROME_PROFILE_CLONE || '');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-chatgpt-live-attachments');
 const compiledMain = fs.readFileSync(path.join(repoDir, 'dist-electron', 'main', 'index.js'), 'utf8');
 const files = [
-  path.join(repoDir, 'public', 'yaochuang-unified-v2.png'),
+  path.join(repoDir, 'public', 'xiangmao-unified-v2.png'),
   path.join(repoDir, 'docs', '0.2.2-face-occlusion-evidence', 'front-face.png'),
   path.join(repoDir, 'docs', '0.2.2-face-occlusion-evidence', 'profile-face.png')
 ];
 
-assert.ok(profileDir, 'YAOCHUANG_LIVE_CHROME_PROFILE_CLONE is required.');
-assert.ok(profileDir.startsWith(path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts') + path.sep), 'Live verification must use a D: test profile clone.');
+assert.ok(profileDir, 'XIANGMAO_LIVE_CHROME_PROFILE_CLONE is required.');
+assert.ok(profileDir.startsWith(path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts') + path.sep), 'Live verification must use a D: test profile clone.');
 for (const file of files) assert.equal(fs.existsSync(file), true, `Missing fixture image: ${file}`);
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,11 +62,11 @@ async function setFile(webContents, file) {
   const { root } = await webContents.debugger.sendCommand('DOM.getDocument', { depth: -1, pierce: true });
   const { nodeId } = await webContents.debugger.sendCommand('DOM.querySelector', {
     nodeId: root.nodeId,
-    selector: `input[data-yaochuang-upload-target="${marker}"]`
+    selector: `input[data-xiangmao-upload-target="${marker}"]`
   });
   assert.ok(nodeId, 'CDP did not resolve the marked ChatGPT file input.');
   await webContents.debugger.sendCommand('DOM.setFileInputFiles', { nodeId, files: [file] });
-  await webContents.executeJavaScript(`document.querySelector('input[data-yaochuang-upload-target="${marker}"]')?.removeAttribute('data-yaochuang-upload-target')`, true);
+  await webContents.executeJavaScript(`document.querySelector('input[data-xiangmao-upload-target="${marker}"]')?.removeAttribute('data-xiangmao-upload-target')`, true);
   return marked;
 }
 
@@ -120,7 +120,7 @@ try {
     perFile.push({ file: path.basename(file), method, inputMarker, inputError, snapshot });
   }
 
-  const prompt = '耀创工坊 1.1.4 附件完整性验证，仅检查发送按钮，不发送此消息。';
+  const prompt = '像锚 1.1.4 附件完整性验证，仅检查发送按钮，不发送此消息。';
   assert.equal(await webContents.executeJavaScript(setPromptScript(prompt), true), true);
   let ready;
   let stableReady = 0;

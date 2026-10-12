@@ -7,8 +7,8 @@ import { _electron as electron } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const electronExecutable = path.join(repoRoot, 'node_modules', 'electron', 'dist', 'electron.exe');
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-startup-notice');
-const allowedArtifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-startup-notice');
+const allowedArtifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts');
 if (!artifactRoot.startsWith(`${allowedArtifactRoot}${path.sep}`)) {
   throw new Error('Startup notice test root escaped the approved D: artifact directory.');
 }
@@ -23,7 +23,7 @@ async function launchApp(userDataDir, viewport) {
     executablePath: electronExecutable,
     args: [repoRoot],
     cwd: repoRoot,
-    env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userDataDir }
+    env: { ...process.env, XIANGMAO_USER_DATA_DIR: userDataDir }
   });
   const page = await app.firstWindow({ timeout: 30_000 });
   const errors = [];
@@ -79,7 +79,7 @@ try {
   assert.equal(await first.page.locator('.app').getAttribute('aria-hidden'), 'true');
   assert.equal(await dialog.getByRole('button').count(), 1);
   assert.equal(await dialog.locator('button[aria-label*="关闭"]').count(), 0);
-  const confirmButton = dialog.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const confirmButton = dialog.getByRole('button', { name: '我已确认，进入像锚' });
   assert.equal(await confirmButton.evaluate((button) => button === document.activeElement), true);
 
   await first.page.keyboard.press('Escape');
@@ -140,7 +140,7 @@ const failure = await launchApp(failureUserData);
 try {
   const dialog = failure.page.getByRole('dialog', { name: '使用前必看｜先选择制作路线' });
   await dialog.waitFor();
-  const button = dialog.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const button = dialog.getByRole('button', { name: '我已确认，进入像锚' });
   await button.click();
   await dialog.getByText('保存失败，请重试', { exact: true }).waitFor();
   assert.equal(await dialog.isVisible(), true);

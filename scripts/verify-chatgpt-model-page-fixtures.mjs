@@ -9,7 +9,7 @@ import { chatGptModelDomPolicy } from '../dist-electron/shared/chatGptModelPolic
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixturePath = path.join(repoDir, 'tests', 'fixtures', 'chatgpt', 'nested-model-menu.html');
-const tempRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-stability');
+const tempRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-stability');
 const profileDir = path.join(tempRoot, `chatgpt-model-fixture-${process.pid}`);
 if (!profileDir.startsWith(`${tempRoot}${path.sep}`)) throw new Error(`Unsafe fixture profile: ${profileDir}`);
 

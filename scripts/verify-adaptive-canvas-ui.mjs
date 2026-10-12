@@ -7,10 +7,10 @@ import { _electron as electron, chromium } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const distRoot = path.join(repoRoot, 'dist');
-const imagePath = process.env.YAOCHUANG_TEST_IMAGE || path.join(repoRoot, 'public', 'yaochuang-unified-v2.png');
-const chromePath = process.env.YAOCHUANG_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const imagePath = process.env.XIANGMAO_TEST_IMAGE || path.join(repoRoot, 'public', 'xiangmao-unified-v2.png');
+const chromePath = process.env.XIANGMAO_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const artifactRoot =
-  process.env.YAOCHUANG_TEST_ARTIFACTS || 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-adaptive-canvas';
+  process.env.XIANGMAO_TEST_ARTIFACTS || 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-adaptive-canvas';
 const viewports = [
   { width: 1024, height: 600 },
   { width: 1280, height: 720 },
@@ -36,7 +36,7 @@ function isInside(root, candidate) {
 
 async function installImageImportFixture(page) {
   await page.evaluate(() => {
-    window.masklock = {
+    window.xiangmao = {
       normalizeImageImport: async (payload) => {
         const type = payload.mimeType || 'image/png';
         const blob = new Blob([payload.data], { type });
@@ -282,12 +282,12 @@ try {
 }
 
 const electronUserData = path.join(artifactRoot, `electron-user-data-${process.pid}`);
-const packagedElectronPath = process.env.YAOCHUANG_ELECTRON_PATH?.trim();
+const packagedElectronPath = process.env.XIANGMAO_ELECTRON_PATH?.trim();
 const electronApp = await electron.launch({
   executablePath: packagedElectronPath || undefined,
   args: packagedElectronPath ? [] : [repoRoot],
   cwd: repoRoot,
-  env: { ...process.env, YAOCHUANG_USER_DATA_DIR: electronUserData }
+  env: { ...process.env, XIANGMAO_USER_DATA_DIR: electronUserData }
 });
 try {
   const page = await electronApp.firstWindow();
@@ -296,7 +296,7 @@ try {
   assert.equal(appVersion, '1.2.4');
   const nativeLayout = await electronApp.evaluate(({ BrowserWindow, screen }) => {
     const window = BrowserWindow.getAllWindows().find((candidate) => !candidate.isDestroyed());
-    if (!window) throw new Error('未找到耀创工坊主窗口。');
+    if (!window) throw new Error('未找到像锚主窗口。');
     const bounds = window.getBounds();
     const workArea = screen.getDisplayMatching(bounds).workArea;
     return { bounds, workArea };

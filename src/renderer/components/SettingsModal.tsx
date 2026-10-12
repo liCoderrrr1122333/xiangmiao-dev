@@ -47,7 +47,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   function patch<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
     const next = { ...settings, [key]: value };
     setSettings(next);
-    window.masklock?.writeSettings(next);
+    window.xiangmao?.writeSettings(next);
   }
 
   function setSessionKey(value: string) {
@@ -147,7 +147,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               </select>
             </label>
             <p className="soft-note">
-              ChatGPT 与 Gemini 共用一个耀创工坊专属 Chrome，并分别使用独立标签页；登录和安全验证始终由你手动完成。
+              ChatGPT 与 Gemini 共用一个像锚专属 Chrome，并分别使用独立标签页；登录和安全验证始终由你手动完成。
             </p>
             <label>
               <input type="checkbox" checked={settings.chatGptKeepAliveEnabled} onChange={(e) => patch('chatGptKeepAliveEnabled', e.target.checked)} />
@@ -254,7 +254,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </section>
         </div>
         <p className="danger-hint">
-          专属 Chrome 使用耀创工坊独立的本机登录资料。API Key 只保留在当前运行会话；本地 Ollama 仅连接本机服务。
+          专属 Chrome 使用像锚独立的本机登录资料。API Key 只保留在当前运行会话；本地 Ollama 仅连接本机服务。
         </p>
       </div>
     </div>

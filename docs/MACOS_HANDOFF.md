@@ -1,4 +1,4 @@
-# 耀创工坊 1.2.4 macOS 构建交接
+# 像锚 1.2.4 macOS 构建交接
 
 更新时间：2026-09-12
 
@@ -12,9 +12,9 @@
 ## 已完成的 macOS 适配
 
 - macOS 使用 Electron 默认的 `Application Support` 数据目录；不再尝试 Windows 的固定 AppData 路径。
-- 导出文件写入 macOS 的“文稿/耀创工坊/Exports”。
+- 导出文件写入 macOS 的“文稿/像锚/Exports”。
 - 支持发现 `/Applications` 与用户 `Applications` 下的 Google Chrome 和 Microsoft Edge。
-- 专属浏览器后台模式使用 CDP 最小化窗口；结束进程时只匹配耀创工坊专属 `user-data-dir`，不触碰普通浏览器。
+- 专属浏览器后台模式使用 CDP 最小化窗口；结束进程时只匹配像锚专属 `user-data-dir`，不触碰普通浏览器。
 - Windows 专用 GPU 参数和窗口控制不会在 macOS 执行。
 - 构建前由 macOS 自带的 `sips` 和 `iconutil` 从维护图标生成 `build/icon.icns`。
 - DMG 同时包含应用入口和 `/Applications` 拖放入口，文件名带版本与 CPU 架构。
@@ -38,7 +38,7 @@ npm run dist:mac
 npm run verify:packaged-mac
 ```
 
-5. 成品位于 `release/Yaochuang-Workshop-1.2.4-<arch>.dmg`。
+5. 成品位于 `release/Xiangmao-Workshop-1.2.4-<arch>.dmg`。
 
 ## 必须人工检查
 

@@ -12,8 +12,8 @@ export async function fileToImageAsset(file: File): Promise<ImageAsset> {
   if (file.size > IMAGE_IMPORT_MAX_BYTES) {
     throw new Error(`${file.name || '所选图片'}：图片超过 25MB，请先在相册中缩小文件后再导入。`);
   }
-  const api = window.masklock?.normalizeImageImport;
-  if (!api) throw new Error('耀创工坊图片导入服务未就绪，请完全退出软件后重新打开。');
+  const api = window.xiangmao?.normalizeImageImport;
+  if (!api) throw new Error('像锚图片导入服务未就绪，请完全退出软件后重新打开。');
   const result = await api({
     name: file.name,
     mimeType: file.type,

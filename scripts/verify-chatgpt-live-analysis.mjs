@@ -6,15 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { _electron as electron } from 'playwright-core';
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const sourceProfile = path.resolve(process.env.YAOCHUANG_LIVE_CHROME_PROFILE_CLONE || '');
-const artifactRoot = path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-chatgpt-live-analysis');
+const sourceProfile = path.resolve(process.env.XIANGMAO_LIVE_CHROME_PROFILE_CLONE || '');
+const artifactRoot = path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-chatgpt-live-analysis');
 const userDataDir = path.join(artifactRoot, 'user-data');
 const profileLink = path.join(userDataDir, 'ChatGPT-Chrome');
 const imagePath = path.join(repoDir, 'docs', '0.2.2-face-occlusion-evidence', 'front-face.png');
 const electronExecutable = path.join(repoDir, 'node_modules', 'electron', 'dist', 'electron.exe');
 
-assert.ok(sourceProfile, 'YAOCHUANG_LIVE_CHROME_PROFILE_CLONE is required.');
-assert.ok(sourceProfile.startsWith(path.resolve('D:\\Yaochuang-Workshop\\TestArtifacts') + path.sep));
+assert.ok(sourceProfile, 'XIANGMAO_LIVE_CHROME_PROFILE_CLONE is required.');
+assert.ok(sourceProfile.startsWith(path.resolve('D:\\Xiangmao-Workshop\\TestArtifacts') + path.sep));
 assert.equal(fs.existsSync(path.join(sourceProfile, 'Default')), true, 'The isolated ChatGPT profile clone is incomplete.');
 assert.equal(fs.existsSync(imagePath), true, `Missing analysis fixture: ${imagePath}`);
 
@@ -43,7 +43,7 @@ const electronApp = await electron.launch({
   cwd: repoDir,
   env: {
     ...process.env,
-    YAOCHUANG_USER_DATA_DIR: userDataDir
+    XIANGMAO_USER_DATA_DIR: userDataDir
   }
 });
 
@@ -54,7 +54,7 @@ try {
   });
   page.on('pageerror', (error) => rendererErrors.push(error.message));
   await page.locator('#root').waitFor({ state: 'visible', timeout: 30_000 });
-  const notice = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const notice = page.getByRole('button', { name: '我已确认，进入像锚' });
   if (await notice.isVisible().catch(() => false)) await notice.click();
 
   await page.locator('#main-upload-input').setInputFiles(imagePath);

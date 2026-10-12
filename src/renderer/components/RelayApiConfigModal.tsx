@@ -51,7 +51,7 @@ export function RelayApiConfigModal({
     let disposed = false;
     setApiKey('');
     setError('');
-    void window.masklock?.getRelayApiStatus().then((next) => {
+    void window.xiangmao?.getRelayApiStatus().then((next) => {
       if (disposed) return;
       onStatusChange(next);
       setRemember(next.remembered);
@@ -71,12 +71,12 @@ export function RelayApiConfigModal({
         setError('更换服务或接口后，请重新粘贴该服务的 API Key。');
         return;
       }
-      const configured = await window.masklock?.configureRelayApiKey({ apiKey, remember, config });
+      const configured = await window.xiangmao?.configureRelayApiKey({ apiKey, remember, config });
       if (configured) onStatusChange(configured);
       if (!configured?.ok) return;
       populate(configured.config);
       setApiKey('');
-      const result = await window.masklock?.testRelayApiConnection({ model: selectedModel });
+      const result = await window.xiangmao?.testRelayApiConnection({ model: selectedModel });
       if (result) onStatusChange(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'API 配置失败，请重试。');
@@ -88,7 +88,7 @@ export function RelayApiConfigModal({
   const clearCredential = async () => {
     setBusy('clear');
     try {
-      const result = await window.masklock?.clearRelayApiKey();
+      const result = await window.xiangmao?.clearRelayApiKey();
       if (result) onStatusChange(result);
       if (!result?.ok) return;
       setApiKey('');

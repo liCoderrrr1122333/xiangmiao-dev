@@ -7,8 +7,8 @@ import sharp from 'sharp';
 import { _electron as electron } from 'playwright-core';
 
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const executablePath = process.env.YAOCHUANG_TEST_EXECUTABLE;
-const artifacts = `D:/Yaochuang-Workshop/TestArtifacts/free-api-face-${Date.now()}`;
+const executablePath = process.env.XIANGMAO_TEST_EXECUTABLE;
+const artifacts = `D:/Xiangmao-Workshop/TestArtifacts/free-api-face-${Date.now()}`;
 const userData = path.join(artifacts, 'user-data');
 const desktop = path.join(artifacts, 'desktop');
 await mkdir(userData, { recursive: true });
@@ -34,12 +34,12 @@ let app;
 let page;
 const errors = [];
 async function launch() {
-  app = await electron.launch({ executablePath, args: executablePath ? [] : [root], cwd: root, env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userData } });
+  app = await electron.launch({ executablePath, args: executablePath ? [] : [root], cwd: root, env: { ...process.env, XIANGMAO_USER_DATA_DIR: userData } });
   await app.evaluate(({ app }, desktop) => app.setPath('desktop', desktop), desktop);
   page = await app.firstWindow();
   page.on('pageerror', e => errors.push(e.message));
   await page.locator('#root').waitFor();
-  const notice = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const notice = page.getByRole('button', { name: '我已确认，进入像锚' });
   if (await notice.waitFor({state:'visible',timeout:5000}).then(()=>true).catch(()=>false)) {
     await notice.click();
     await notice.waitFor({state:'detached'});
@@ -91,7 +91,7 @@ try {
   await dialog.getByLabel('服务地址（Base URL）').fill(baseUrl);
   await dialog.getByRole('button', {name:'关闭 API 配置'}).click();
 
-  const fixtureImage = path.join(root,'public','yaochuang-unified-v2.png');
+  const fixtureImage = path.join(root,'public','xiangmao-unified-v2.png');
   await page.locator('#main-upload-input').setInputFiles(fixtureImage);
   await page.getByTitle('绘制红圈').click();
   const canvas = await page.locator('.canvas-wrap canvas').boundingBox();
@@ -138,7 +138,7 @@ try {
 
   // Exercise actual MediaPipe and IPC with an existing local portrait fixture, never a remote upload.
   await page.getByTitle('查看全部结果',{exact:true}).click();
-  await page.locator('#result-upload-input').setInputFiles('D:/Yaochuang-Workshop/TestArtifacts/1.1.5-camera-realism-strength/strength-10.jpg');
+  await page.locator('#result-upload-input').setInputFiles('D:/Xiangmao-Workshop/TestArtifacts/1.1.5-camera-realism-strength/strength-10.jpg');
   await page.getByRole('button',{name:'关闭预览',exact:true}).waitFor({timeout:10000});
   await closePreview();
   await page.getByRole('button',{name:'提示词',exact:true}).click();

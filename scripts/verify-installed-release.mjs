@@ -5,13 +5,13 @@ import path from 'node:path';
 import { _electron as electron } from 'playwright-core';
 
 const localAppData = process.env.LOCALAPPDATA || '';
-const executablePath = process.env.YAOCHUANG_INSTALLED_EXE ||
-  path.join(localAppData, 'Programs', 'yaochuang-workshop', '耀创工坊.exe');
+const executablePath = process.env.XIANGMAO_INSTALLED_EXE ||
+  path.join(localAppData, 'Programs', 'xiangmao-workshop', '像锚.exe');
 const artifactRoot = path.resolve(
-  process.env.YAOCHUANG_INSTALLED_ARTIFACTS ||
-  'D:\\Yaochuang-Workshop\\TestArtifacts\\1.1.4-install-validation\\installed-release'
+  process.env.XIANGMAO_INSTALLED_ARTIFACTS ||
+  'D:\\Xiangmao-Workshop\\TestArtifacts\\1.1.4-install-validation\\installed-release'
 );
-const requestedProvider = process.env.YAOCHUANG_INSTALLED_PROVIDER?.trim();
+const requestedProvider = process.env.XIANGMAO_INSTALLED_PROVIDER?.trim();
 
 assert.equal(existsSync(executablePath), true, `installed executable is missing: ${executablePath}`);
 await mkdir(artifactRoot, { recursive: true });
@@ -28,7 +28,7 @@ try {
   });
   page.on('pageerror', (error) => rendererErrors.push(error.message));
   await page.locator('#root').waitFor({ state: 'visible', timeout: 30_000 });
-  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入像锚' });
   const startupNoticeShown = await startupNoticeConfirm.waitFor({ state: 'visible', timeout: 10_000 })
     .then(() => true)
     .catch(() => false);

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import {
   preferredAppDataDirectory,
@@ -9,8 +11,8 @@ import {
 
 test('macOS uses Electron application data unless the caller provides an explicit absolute override', () => {
   assert.equal(preferredAppDataDirectory('darwin', ''), undefined);
-  assert.equal(preferredAppDataDirectory('darwin', '/tmp/yaochuang-test'), '/tmp/yaochuang-test');
-  assert.equal(preferredAppDataDirectory('win32', ''), 'D:\\Yaochuang-Workshop\\AppData');
+  assert.equal(preferredAppDataDirectory('darwin', '/tmp/xiangmao-test'), '/tmp/xiangmao-test');
+  assert.equal(preferredAppDataDirectory('win32', ''), 'D:\\Xiangmao-Workshop\\AppData');
 });
 
 test('source runs isolate their data while explicit test directories retain priority', () => {
@@ -20,13 +22,23 @@ test('source runs isolate their data while explicit test directories retain prio
   assert.throws(() => preferredAppDataDirectory('win32', '', 'relative-folder'));
 });
 
+test('renamed app reuses an existing legacy data directory', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'xiangmao-legacy-data-'));
+  try {
+    assert.equal(preferredAppDataDirectory('darwin', '', '', directory), directory);
+    assert.equal(preferredAppDataDirectory('darwin', '/tmp/xiangmao-override', '', directory), '/tmp/xiangmao-override');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('macOS cleanup selects only Chrome processes that own the dedicated profile', () => {
-  const profile = '/Users/hale/Library/Application Support/耀创工坊/ChatGPT-Chrome';
+  const profile = '/Users/hale/Library/Application Support/像锚/ChatGPT-Chrome';
   const processes = [
-    '  101 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --user-data-dir=/Users/hale/Library/Application Support/耀创工坊/ChatGPT-Chrome --remote-debugging-port=1234',
+    '  101 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --user-data-dir=/Users/hale/Library/Application Support/像锚/ChatGPT-Chrome --remote-debugging-port=1234',
     '  102 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --profile-directory=Default',
-    '  103 /Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge --user-data-dir="/Users/hale/Library/Application Support/耀创工坊/ChatGPT-Chrome-Edge"',
-    '  104 /usr/bin/something --user-data-dir=/Users/hale/Library/Application Support/耀创工坊/ChatGPT-Chrome'
+    '  103 /Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge --user-data-dir="/Users/hale/Library/Application Support/像锚/ChatGPT-Chrome-Edge"',
+    '  104 /usr/bin/something --user-data-dir=/Users/hale/Library/Application Support/像锚/ChatGPT-Chrome'
   ].join('\n');
   assert.deepEqual(managedDarwinBrowserProcessIds(processes, profile), [101]);
 });
@@ -50,7 +62,7 @@ test('macOS packaging prepares an ICNS icon and produces a DMG for the current M
   assert.match(pkg.scripts['verify:packaged-mac'], /verify-packaged-macos/);
   assert.match(iconScript, /process\.platform !== 'darwin'/);
   assert.match(iconScript, /iconutil/);
-  assert.match(iconScript, /yaochuang-mascot-source\.png/);
+  assert.match(iconScript, /xiangmao-mascot-source\.png/);
 });
 
 test('macOS package keeps Windows-only browser and GPU helpers outside the Darwin path', async () => {

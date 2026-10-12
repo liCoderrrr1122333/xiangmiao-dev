@@ -7,10 +7,10 @@ import { chromium } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const distRoot = path.join(repoRoot, 'dist');
-const imagePath = process.env.YAOCHUANG_TEST_IMAGE || path.join(repoRoot, 'public', 'yaochuang-unified-v2.png');
+const imagePath = process.env.XIANGMAO_TEST_IMAGE || path.join(repoRoot, 'public', 'xiangmao-unified-v2.png');
 const artifactRoot =
-  process.env.YAOCHUANG_TEST_ARTIFACTS || 'D:\\Yaochuang-Workshop\\TestArtifacts\\1.2.4-local-analysis-ui';
-const chromePath = process.env.YAOCHUANG_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+  process.env.XIANGMAO_TEST_ARTIFACTS || 'D:\\Xiangmao-Workshop\\TestArtifacts\\1.2.4-local-analysis-ui';
+const chromePath = process.env.XIANGMAO_TEST_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const mimeTypes = new Map([
   ['.css', 'text/css; charset=utf-8'],
   ['.html', 'text/html; charset=utf-8'],
@@ -82,7 +82,7 @@ function attachConsoleAudit(page, errors) {
 
 async function installImageImportFixture(page) {
   await page.evaluate(() => {
-    window.masklock = {
+    window.xiangmao = {
       normalizeImageImport: async (payload) => {
         const type = payload.mimeType || 'image/png';
         const blob = new Blob([payload.data], { type });
@@ -124,7 +124,7 @@ try {
   attachConsoleAudit(page, consoleErrors);
   await page.goto(url, { waitUntil: 'networkidle' });
   await assertLayout(page, 620);
-  assert.equal(await page.getByText('耀创工坊', { exact: true }).count(), 1, '顶栏必须保留唯一产品名称');
+  assert.equal(await page.getByText('像锚', { exact: true }).count(), 1, '顶栏必须保留唯一产品名称');
   assert.equal(
     await page.getByText('Image 2.0 区域锁定工作台', { exact: true }).count(),
     0,

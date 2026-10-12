@@ -82,7 +82,7 @@ test('relay preparation preserves source bytes and restoration writes an exact-s
   assert.equal(restored.crop.width, prepared.plan.contentWidth);
   assert.equal(restored.crop.height, prepared.plan.contentHeight);
 
-  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'yaochuang-relay-preservation-'));
+  const outputRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'xiangmao-relay-preservation-'));
   try {
     const originalPath = path.join(outputRoot, '中转站原始图', 'original.png');
     const normalizedPath = path.join(outputRoot, 'result.png');

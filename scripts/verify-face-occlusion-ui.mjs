@@ -6,22 +6,22 @@ import { _electron as electron } from 'playwright-core';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const artifactRoot =
-  process.env.YAOCHUANG_TEST_ARTIFACTS || 'D:\\Yaochuang-Workshop\\TestArtifacts\\face-occlusion-runtime';
+  process.env.XIANGMAO_TEST_ARTIFACTS || 'D:\\Xiangmao-Workshop\\TestArtifacts\\face-occlusion-runtime';
 const userDataDir = path.join(artifactRoot, `user-data-${process.pid}`);
-const projectFixture = process.env.YAOCHUANG_FACE_TEST_PROJECT?.trim();
-const packagedElectronPath = process.env.YAOCHUANG_ELECTRON_PATH?.trim();
+const projectFixture = process.env.XIANGMAO_FACE_TEST_PROJECT?.trim();
+const packagedElectronPath = process.env.XIANGMAO_ELECTRON_PATH?.trim();
 
 await mkdir(userDataDir, { recursive: true });
 if (projectFixture) {
   assert.ok((await stat(projectFixture)).isFile(), `找不到人脸测试项目：${projectFixture}`);
-  await copyFile(projectFixture, path.join(userDataDir, 'autosave.masklock.json'));
+  await copyFile(projectFixture, path.join(userDataDir, 'autosave.xiangmao.json'));
 }
 
 const app = await electron.launch({
   executablePath: packagedElectronPath || undefined,
   args: packagedElectronPath ? [] : [repoRoot],
   cwd: repoRoot,
-  env: { ...process.env, YAOCHUANG_USER_DATA_DIR: userDataDir }
+  env: { ...process.env, XIANGMAO_USER_DATA_DIR: userDataDir }
 });
 
 try {
@@ -31,7 +31,7 @@ try {
   page.on('console', (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
   page.on('pageerror', (error) => pageErrors.push(error.stack || error.message));
   await page.waitForLoadState('domcontentloaded');
-  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入耀创工坊' });
+  const startupNoticeConfirm = page.getByRole('button', { name: '我已确认，进入像锚' });
   const startupNoticeShown = await startupNoticeConfirm.waitFor({ state: 'visible', timeout: 10_000 })
     .then(() => true)
     .catch(() => false);
@@ -43,7 +43,7 @@ try {
   if (projectFixture) {
     await page.getByText('红圈已锁定', { exact: true }).waitFor();
   } else {
-    const imagePath = path.join(repoRoot, 'public', 'yaochuang-unified-v2.png');
+    const imagePath = path.join(repoRoot, 'public', 'xiangmao-unified-v2.png');
     await page.locator('#main-upload-input').setInputFiles(imagePath);
     await page.getByTitle('绘制红圈').click();
     const canvas = await page.locator('.canvas-wrap canvas').boundingBox();

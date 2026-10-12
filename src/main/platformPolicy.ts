@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 
 export type SupportedDesktopPlatform = NodeJS.Platform;
 
@@ -11,13 +12,23 @@ function isAbsoluteForPlatform(platform: SupportedDesktopPlatform, value: string
   return platform === 'win32' ? path.win32.isAbsolute(value) : path.posix.isAbsolute(value);
 }
 
-export function preferredAppDataDirectory(platform: SupportedDesktopPlatform, explicitDirectory = '', developmentDirectory = '') {
+export function preferredAppDataDirectory(
+  platform: SupportedDesktopPlatform,
+  explicitDirectory = '',
+  developmentDirectory = '',
+  legacyDirectory = ''
+) {
   const override = explicitDirectory.trim() || developmentDirectory.trim();
   if (override) {
-    if (!isAbsoluteForPlatform(platform, override)) throw new Error('YAOCHUANG_USER_DATA_DIR 必须是绝对路径。');
+    if (!isAbsoluteForPlatform(platform, override)) throw new Error('XIANGMAO_USER_DATA_DIR 必须是绝对路径。');
     return override;
   }
-  return platform === 'win32' ? 'D:\\Yaochuang-Workshop\\AppData' : undefined;
+  if (legacyDirectory && existsSync(legacyDirectory)) return legacyDirectory;
+  // Existing Windows installations used this fixed data root; keep it when present.
+  if (platform === 'win32' && existsSync('D:\\Yaochuang-Workshop\\AppData')) {
+    return 'D:\\Yaochuang-Workshop\\AppData';
+  }
+  return platform === 'win32' ? 'D:\\Xiangmao-Workshop\\AppData' : undefined;
 }
 
 export function browserExecutableCandidates(

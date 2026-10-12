@@ -23,6 +23,7 @@ export interface FaceNaturalizationMaskInput {
   y: number;
   width: number;
   height: number;
+  source?: Buffer;
 }
 
 export interface FaceNaturalizationFileResult {
@@ -504,14 +505,32 @@ export async function applyFaceNaturalization(
     throw new Error('人脸处理区域超出原图，请重新导入完整原图后重试。');
   }
 
-  // Median filtering removes isolated generation noise; the low blend amount
-  // keeps pores, expression and facial structure intact.
-  const softened = await sharp(decoded.data, { raw: { width, height, channels: 4 } })
+  const resultRgb = await sharp(decoded.data, { raw: { width, height, channels: 4 } })
     .removeAlpha()
-    .median(3)
-    .modulate({ brightness: 1.012, saturation: 0.965 })
     .raw()
     .toBuffer();
+  const blurRgb = (pixels: Buffer) => sharp(pixels, { raw: { width, height, channels: 3 } }).blur(1.15).raw().toBuffer();
+  const resultBlur = await blurRgb(resultRgb);
+  let sourceRgb = resultRgb;
+  let sourceBlur = resultBlur;
+  let usingSource = false;
+  if (maskInput.source && Buffer.isBuffer(maskInput.source) && maskInput.source.length > 4) {
+    try {
+      const sourceDecoded = await sharp(maskInput.source, { limitInputPixels: maximumPixels })
+        .rotate()
+        .removeAlpha()
+        .toColourspace('srgb')
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      if (sourceDecoded.info.width === width && sourceDecoded.info.height === height && sourceDecoded.info.channels === 3) {
+        sourceRgb = sourceDecoded.data;
+        sourceBlur = await blurRgb(sourceRgb);
+        usingSource = true;
+      }
+    } catch {
+      usingSource = false;
+    }
+  }
   const output = Buffer.from(decoded.data);
   const left = Math.max(0, Math.floor(maskInput.x));
   const top = Math.max(0, Math.floor(maskInput.y));
@@ -532,11 +551,16 @@ export async function applyFaceNaturalization(
       );
       if (alpha <= 0.01) continue;
       processedPixels += 1;
-      const strength = Math.min(0.28, alpha * 0.28);
+      const strength = usingSource ? Math.min(0.82, alpha * 0.82) : Math.min(0.55, alpha * 0.55);
+      const highGain = usingSource ? 1 : 1.55;
       const index = (y * width + x) * 4;
       const softIndex = (y * width + x) * 3;
       for (let channel = 0; channel < 3; channel += 1) {
-        output[index + channel] = clampByte(decoded.data[index + channel] + (softened[softIndex + channel] - decoded.data[index + channel]) * strength);
+        const base = decoded.data[index + channel];
+        const low = resultBlur[softIndex + channel];
+        const high = Math.max(-28, Math.min(28, sourceRgb[softIndex + channel] - sourceBlur[softIndex + channel]));
+        const textured = clampByte(low + high * highGain);
+        output[index + channel] = clampByte(base + (textured - base) * strength);
       }
     }
   }
